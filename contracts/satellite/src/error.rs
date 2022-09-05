@@ -20,6 +20,13 @@ pub enum IbcAckResult {
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
+
     #[error("Invalid reply id")]
     InvalidReplyId {},
+
+    #[error("Channel already created {channel}")]
+    ChannelAlreadyCreated { channel_id: String },
+
+    #[error("Invalid source port {invalid}. Should be : {channel_id}")]
+    InvalidSourcePort { invalid: String, valid: String },
 }

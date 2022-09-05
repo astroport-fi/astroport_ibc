@@ -64,25 +64,22 @@ pub fn ibc_channel_connect(
     deps: DepsMut,
     _env: Env,
     msg: IbcChannelConnectMsg,
-) -> StdResult<IbcBasicResponse> {
+) -> Result<IbcBasicResponse, ContractError> {
     let channel = msg.channel();
 
     let mut config = CONFIG.load(deps.storage)?;
     match config.channel {
         Some(channel_id) => {
-            return Err(StdError::generic_err(format!(
-                "Channel already created: {}",
-                channel_id
-            )));
+            return Err(ContractError::ChannelAlreadyCreated { channel_id });
         }
         None => {
-            if &channel.endpoint.port_id == &config.main_controller_port {
+            if &channel.counterparty_endpoint.port_id == &config.main_controller_port {
                 config.channel = Some(channel.endpoint.channel_id.clone())
             } else {
-                return Err(StdError::generic_err(format!(
-                    "Invalid source port {}. Should be : {}",
-                    &channel.endpoint.port_id, &config.main_controller_port
-                )));
+                return Err(ContractError::InvalidSourcePort {
+                    invalid: channel.endpoint.port_id.clone(),
+                    valid: config.main_controller_port,
+                });
             }
         }
     }
