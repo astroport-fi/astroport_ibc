@@ -41,4 +41,21 @@ pub enum ExecuteMsg {
         proposal_id: u64,
         messages: Vec<ProposalMessage>,
     },
+    /// Creates a request to change contract ownership
+    /// ## Executor
+    /// Only the current owner can execute this.
+    ProposeNewOwner {
+        /// The newly proposed owner
+        owner: String,
+        /// The validity period of the proposal to change the contract owner
+        expires_in: u64,
+    },
+    /// Removes a request to change contract ownership
+    /// ## Executor
+    /// Only the current owner can execute this
+    DropOwnershipProposal {},
+    /// Claims contract ownership
+    /// ## Executor
+    /// Only the newly proposed owner can execute this
+    ClaimOwnership {},
 }

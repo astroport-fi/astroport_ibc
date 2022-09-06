@@ -33,7 +33,26 @@ pub struct UpdateConfigMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     TransferAstro {},
-    UpdateConfig { update_params: UpdateConfigMsg },
+    UpdateConfig {
+        update_params: UpdateConfigMsg,
+    },
+    /// Creates a request to change contract ownership
+    /// ## Executor
+    /// Only the current owner can execute this.
+    ProposeNewOwner {
+        /// The newly proposed owner
+        owner: String,
+        /// The validity period of the proposal to change the contract owner
+        expires_in: u64,
+    },
+    /// Removes a request to change contract ownership
+    /// ## Executor
+    /// Only the current owner can execute this
+    DropOwnershipProposal {},
+    /// Claims contract ownership
+    /// ## Executor
+    /// Only the newly proposed owner can execute this
+    ClaimOwnership {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

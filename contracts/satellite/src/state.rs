@@ -1,3 +1,4 @@
+use astro_ibc::astroport_governance::astroport::common::OwnershipProposal;
 use astro_ibc::astroport_governance::U64Key;
 use astro_ibc::satellite::UpdateConfigMsg;
 use cosmwasm_std::{Addr, Env};
@@ -71,3 +72,6 @@ pub const RESULTS: Map<U64Key, TxInfo> = Map::new("results");
 
 /// Stores data for reply endpoint.
 pub const REPLY_DATA: Item<u64> = Item::new("reply_data");
+
+/// Contains a proposal to change contract ownership.
+pub const OWNERSHIP_PROPOSAL: Item<OwnershipProposal> = Item::new("ownership_proposal");

@@ -12,7 +12,7 @@ use astro_ibc::satellite::IbcAckResult;
 use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
-use crate::error::{ContractError, IbcAckResult, Never};
+use crate::error::{ContractError, Never};
 use crate::state::{Config, CONFIG, REPLY_DATA};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
