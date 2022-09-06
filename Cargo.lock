@@ -13,6 +13,7 @@ name = "astro-ibc"
 version = "0.1.0"
 dependencies = [
  "astroport-governance",
+ "cosmwasm-std",
  "schemars",
  "serde",
 ]

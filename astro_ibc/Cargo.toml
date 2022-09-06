@@ -14,3 +14,4 @@ edition = "2021"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8"
 astroport-governance = { git = "https://github.com/astroport-fi/astroport-governance" }
+cosmwasm-std = { version = "1.0.0" }

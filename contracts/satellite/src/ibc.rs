@@ -8,6 +8,7 @@ use cosmwasm_std::{
 };
 
 use astro_ibc::controller::IbcProposal;
+use astro_ibc::satellite::IbcAckResult;
 use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
@@ -76,7 +77,8 @@ pub fn ibc_channel_connect(
         }
         None => {
             if channel.counterparty_endpoint.port_id == config.main_controller_port {
-                config.gov_channel = Some(channel.endpoint.channel_id.clone())
+                config.gov_channel = Some(channel.endpoint.channel_id.clone());
+                CONFIG.save(deps.storage, &config)?;
             } else {
                 return Err(ContractError::InvalidSourcePort {
                     invalid: channel.endpoint.port_id.clone(),

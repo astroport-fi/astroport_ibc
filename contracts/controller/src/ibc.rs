@@ -8,6 +8,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use astro_ibc::controller::{IbcProposal, IbcProposalState};
+use astro_ibc::satellite::IbcAckResult;
 
 use crate::state::PROPOSAL_STATE;
 
@@ -111,7 +112,7 @@ pub fn ibc_packet_ack(
     _env: Env,
     msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
-    let ics20msg: Ics20Ack = from_binary(&msg.acknowledgement.data)?;
+    let ibc_ack: IbcAckResult = from_binary(&msg.acknowledgement.data)?;
     let ibc_proposal: IbcProposal = from_binary(&msg.original_packet.data)?;
     PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
         None => Err(StdError::generic_err(format!(
@@ -120,9 +121,9 @@ pub fn ibc_packet_ack(
         ))),
         Some(state) => {
             if state == (IbcProposalState::InProgress {}) {
-                match ics20msg {
-                    Ics20Ack::Result(_) => Ok(IbcProposalState::Succeed {}),
-                    Ics20Ack::Error(_) => Ok(IbcProposalState::Failed {}),
+                match ibc_ack {
+                    IbcAckResult::Ok(_) => Ok(IbcProposalState::Succeed {}),
+                    IbcAckResult::Error(_) => Ok(IbcProposalState::Failed {}),
                 }
             } else {
                 Err(StdError::generic_err(format!(
