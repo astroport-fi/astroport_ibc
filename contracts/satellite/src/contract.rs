@@ -1,12 +1,15 @@
+use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response};
+use cosmwasm_std::{
+    Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Reply, Response,
+};
 use cw2::set_contract_version;
-use std::io::Empty;
+use cw_utils::must_pay;
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, REPLY_DATA, RESULTS};
-use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg};
+use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -25,8 +28,13 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
+            owner: addr_validate_to_lower(deps.api, msg.owner)?,
+            astro_denom: msg.astro_denom,
             main_controller_port: format!("wasm.{}", msg.main_controller),
-            channel: None,
+            main_maker: msg.main_maker,
+            gov_channel: None,
+            transfer_channel: msg.transfer_channel,
+            timeout: msg.timeout,
         },
     )?;
 
@@ -35,10 +43,10 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, ContractError> {
-    let seq_id = REPLY_DATA.load(deps.storage)?.into();
+    let proposal_id = REPLY_DATA.load(deps.storage)?.into();
     match reply.id {
         RECEIVE_ID => {
-            RESULTS.save(deps.storage, seq_id, &env.into())?;
+            RESULTS.save(deps.storage, proposal_id, &env.into())?;
             Ok(Response::new())
         }
         _ => Err(ContractError::InvalidReplyId {}),
@@ -47,20 +55,48 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: ExecuteMsg,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::TransferAstro {} => {
+            let config = CONFIG.load(deps.storage)?;
+            let amount = must_pay(&info, &config.astro_denom)?;
+            let msg = CosmosMsg::Ibc(IbcMsg::Transfer {
+                channel_id: config.transfer_channel,
+                to_address: config.main_maker,
+                amount: Coin {
+                    denom: config.astro_denom.clone(),
+                    amount,
+                },
+                timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
+            });
+            Ok(Response::new()
+                .add_message(msg)
+                .add_attribute("action", "transfer_astro"))
+        }
+        ExecuteMsg::UpdateConfig { update_params } => {
+            CONFIG.update(deps.storage, |mut config| {
+                if config.owner == info.sender {
+                    config.update(update_params);
+                    Ok(config)
+                } else {
+                    Err(ContractError::Unauthorized {})
+                }
+            })?;
+            Ok(Response::new().add_attribute("action", "update_config"))
+        }
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> Result<Binary, ContractError> {
     unimplemented!()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: Empty) -> Result<Binary, ContractError> {
-    unimplemented!()
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     Ok(Response::default())
 }

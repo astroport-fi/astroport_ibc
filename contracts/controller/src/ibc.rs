@@ -1,13 +1,28 @@
-use crate::state::CHANNEL;
 use cosmwasm_std::{
-    entry_point, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError, StdResult,
+    entry_point, from_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError,
+    StdResult,
 };
-use cw_storage_plus::Item;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use astro_ibc::controller::{IbcProposal, IbcProposalState};
+
+use crate::state::PROPOSAL_STATE;
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
+
+/// This is a generic ICS acknowledgement format.
+/// Proto defined here: https://github.com/cosmos/cosmos-sdk/blob/v0.42.0/proto/ibc/core/channel/v1/channel.proto#L141-L147
+/// This is compatible with the JSON serialization
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum Ics20Ack {
+    Result(Binary),
+    Error(String),
+}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_channel_open(
@@ -22,7 +37,7 @@ pub fn ibc_channel_open(
             "Ordering is invalid. The channel must be unordered",
         ));
     }
-    if &channel.version != IBC_APP_VERSION {
+    if channel.version != IBC_APP_VERSION {
         return Err(StdError::generic_err(format!(
             "Must set version to `{}`",
             IBC_APP_VERSION
@@ -45,13 +60,11 @@ pub fn ibc_channel_open(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_channel_connect(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
-    CHANNEL.save(deps.storage, &channel.endpoint.channel_id)?;
-
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_connect")
         .add_attribute("channel_id", &channel.endpoint.channel_id))
@@ -68,28 +81,65 @@ pub fn ibc_packet_receive(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_timeout(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _msg: IbcPacketTimeoutMsg,
+    msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let ibc_proposal: IbcProposal = from_binary(&msg.packet.data)?;
+    PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
+        None => Err(StdError::generic_err(format!(
+            "Proposal {} was not executed via controller",
+            ibc_proposal.id
+        ))),
+        Some(state) => {
+            if state == (IbcProposalState::InProgress {}) {
+                Ok(IbcProposalState::Failed {})
+            } else {
+                Err(StdError::generic_err(format!(
+                    "Proposal id: {} state is already {}",
+                    ibc_proposal.id, state
+                )))
+            }
+        }
+    })?;
     Ok(IbcBasicResponse::new().add_attribute("action", "packet_timeout"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_ack(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _msg: IbcPacketAckMsg,
+    msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let ics20msg: Ics20Ack = from_binary(&msg.acknowledgement.data)?;
+    let ibc_proposal: IbcProposal = from_binary(&msg.original_packet.data)?;
+    PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
+        None => Err(StdError::generic_err(format!(
+            "Proposal {} was not executed via controller",
+            ibc_proposal.id
+        ))),
+        Some(state) => {
+            if state == (IbcProposalState::InProgress {}) {
+                match ics20msg {
+                    Ics20Ack::Result(_) => Ok(IbcProposalState::Succeed {}),
+                    Ics20Ack::Error(_) => Ok(IbcProposalState::Failed {}),
+                }
+            } else {
+                Err(StdError::generic_err(format!(
+                    "Proposal id: {} state is already {}",
+                    ibc_proposal.id, state
+                )))
+            }
+        }
+    })?;
     Ok(IbcBasicResponse::new().add_attribute("action", "packet_ack"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_channel_close(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _channel: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
-    CHANNEL.remove(deps.storage);
     Ok(IbcBasicResponse::new().add_attribute("action", "ibc_close"))
 }

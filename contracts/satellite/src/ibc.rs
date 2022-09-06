@@ -1,16 +1,18 @@
-use crate::contract::RECEIVE_ID;
-use astro_ibc::astroport_governance::assembly::ProposalMessage;
-use astro_ibc::astroport_governance::U64Key;
-use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Binary, CosmosMsg, DepsMut, Env, Ibc3ChannelOpenResponse,
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, ReplyOn, StdError, StdResult, SubMsg, Uint64,
-};
 use std::fmt::Display;
 
+use cosmwasm_std::{
+    entry_point, from_binary, to_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, ReplyOn, StdError, StdResult, SubMsg,
+};
+
+use astro_ibc::controller::IbcProposal;
+use itertools::Itertools;
+
+use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, IbcAckResult, Never};
-use crate::state::{Config, CONFIG, REPLY_DATA, RESULTS};
+use crate::state::{Config, CONFIG, REPLY_DATA};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -38,7 +40,7 @@ pub fn ibc_channel_open(
             "Ordering is invalid. The channel must be unordered",
         ));
     }
-    if &channel.version != IBC_APP_VERSION {
+    if channel.version != IBC_APP_VERSION {
         return Err(StdError::generic_err(format!(
             "Must set version to `{}`",
             IBC_APP_VERSION
@@ -68,13 +70,13 @@ pub fn ibc_channel_connect(
     let channel = msg.channel();
 
     let mut config = CONFIG.load(deps.storage)?;
-    match config.channel {
+    match config.gov_channel {
         Some(channel_id) => {
             return Err(ContractError::ChannelAlreadyCreated { channel_id });
         }
         None => {
-            if &channel.counterparty_endpoint.port_id == &config.main_controller_port {
-                config.channel = Some(channel.endpoint.channel_id.clone())
+            if channel.counterparty_endpoint.port_id == config.main_controller_port {
+                config.gov_channel = Some(channel.endpoint.channel_id.clone())
             } else {
                 return Err(ContractError::InvalidSourcePort {
                     invalid: channel.endpoint.port_id.clone(),
@@ -96,22 +98,22 @@ pub fn ibc_packet_receive(
     _env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    let mut response = IbcReceiveResponse::new().add_attribute("action", "ibc_packet_receive");
+    let response = IbcReceiveResponse::new().add_attribute("action", "ibc_packet_receive");
 
     (|| {
-        let mut p_messages: Vec<ProposalMessage> = from_binary(&msg.packet.data)?;
-        p_messages.sort_by(|a, b| a.order.cmp(&b.order));
+        let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
         let mut response = response.clone().set_ack(ack_ok());
-        if !p_messages.is_empty() {
-            let mut messages: Vec<_> = p_messages
+        if !messages.is_empty() {
+            let mut messages: Vec<_> = messages
                 .into_iter()
-                .map(|p_message| SubMsg::new(p_message.msg))
+                .sorted_by(|a, b| a.order.cmp(&b.order))
+                .map(|message| SubMsg::new(message.msg))
                 .collect();
             if let Some(last_msg) = messages.last_mut() {
                 last_msg.reply_on = ReplyOn::Success;
                 last_msg.id = RECEIVE_ID;
             }
-            REPLY_DATA.save(deps.storage, &msg.packet.sequence)?;
+            REPLY_DATA.save(deps.storage, &id)?;
             response = response.add_submessages(messages)
         }
         Ok(response)
@@ -145,10 +147,10 @@ pub fn ibc_channel_close(
 ) -> Result<IbcBasicResponse, ContractError> {
     CONFIG.update::<_, StdError>(deps.storage, |config| {
         config
-            .channel
-            .ok_or(StdError::generic_err("Channel was not found"))?;
+            .gov_channel
+            .ok_or_else(|| StdError::generic_err("Channel was not found"))?;
         Ok(Config {
-            channel: None,
+            gov_channel: None,
             ..config
         })
     })?;

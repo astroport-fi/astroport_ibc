@@ -2,18 +2,15 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Response, StdError, StdResult, Uint64,
+    Response, StdResult,
 };
 use cw2::set_contract_version;
-use serde::{Deserialize, Serialize};
 
 use crate::error::ContractError;
-use astro_ibc::astroport_governance::assembly::ProposalMessage;
 use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
 
-use crate::ibc::{CHANNEL, IBC_APP_VERSION};
-use crate::state::{Config, CONFIG, RESULTS};
-use astro_ibc::controller::{ExecuteMsg, InstantiateMsg};
+use crate::state::{Config, CONFIG, PROPOSAL_STATE};
+use astro_ibc::controller::{ExecuteMsg, IbcProposal, IbcProposalState, InstantiateMsg};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -48,15 +45,24 @@ pub fn execute(
         return Err(ContractError::Unauthorized {});
     }
     match msg {
-        ExecuteMsg::IbcExecuteProposal { proposal_messages } => {
-            let channel_id = CHANNEL
-                .load(deps.storage)
-                .map_err(|_| StdError::generic_err("The channel is closed"))?;
+        ExecuteMsg::IbcExecuteProposal {
+            channel_id,
+            proposal_id,
+            messages,
+        } => {
             let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id: channel_id.clone(),
-                data: to_binary(&proposal_messages)?,
+                data: to_binary(&IbcProposal {
+                    id: proposal_id,
+                    messages,
+                })?,
                 timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
             });
+            PROPOSAL_STATE.save(
+                deps.storage,
+                proposal_id.into(),
+                &IbcProposalState::InProgress {},
+            )?;
 
             Ok(Response::new()
                 .add_message(ibc_msg)
