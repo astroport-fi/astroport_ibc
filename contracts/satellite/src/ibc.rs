@@ -13,7 +13,7 @@ use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
-use crate::state::{Config, CONFIG, REPLY_DATA};
+use crate::state::{CONFIG, REPLY_DATA};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -70,7 +70,7 @@ pub fn ibc_channel_connect(
 ) -> Result<IbcBasicResponse, ContractError> {
     let channel = msg.channel();
 
-    let mut config = CONFIG.load(deps.storage)?;
+    let config = CONFIG.load(deps.storage)?;
     match config.gov_channel {
         Some(channel_id) => {
             return Err(ContractError::ChannelAlreadyEstablished { channel_id });
@@ -97,39 +97,47 @@ pub fn ibc_packet_receive(
     _env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    let response = IbcReceiveResponse::new().add_attribute("action", "ibc_packet_receive");
+    do_packet_receive(deps, msg).or_else(|err| {
+        Ok(IbcReceiveResponse::new()
+            .add_attribute("action", "ibc_packet_receive")
+            .set_ack(ack_fail(err)))
+    })
+}
 
-    (|| {
-        let config = CONFIG.load(deps.storage)?;
-        match config.gov_channel {
-            Some(gov_channel) if gov_channel != msg.packet.dest.channel_id => {
-                return Err(ContractError::InvalidGovernanceChannel {
-                    invalid: msg.packet.dest.channel_id,
-                    valid: gov_channel,
-                })
-            }
-            None => return Err(ContractError::GovernanceChannelNotFound {}),
-            _ => {}
+fn do_packet_receive(
+    deps: DepsMut,
+    msg: IbcPacketReceiveMsg,
+) -> Result<IbcReceiveResponse, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    match config.gov_channel {
+        Some(gov_channel) if gov_channel != msg.packet.dest.channel_id => {
+            return Err(ContractError::InvalidGovernanceChannel {
+                invalid: msg.packet.dest.channel_id,
+                valid: gov_channel,
+            })
         }
+        None => return Err(ContractError::GovernanceChannelNotFound {}),
+        _ => {}
+    }
 
-        let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
-        let mut response = response.clone().set_ack(ack_ok());
-        if !messages.is_empty() {
-            let mut messages: Vec<_> = messages
-                .into_iter()
-                .sorted_by(|a, b| a.order.cmp(&b.order))
-                .map(|message| SubMsg::new(message.msg))
-                .collect();
-            if let Some(last_msg) = messages.last_mut() {
-                last_msg.reply_on = ReplyOn::Success;
-                last_msg.id = RECEIVE_ID;
-            }
-            REPLY_DATA.save(deps.storage, &id)?;
-            response = response.add_submessages(messages)
+    let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
+    let mut response = IbcReceiveResponse::new()
+        .add_attribute("action", "ibc_packet_receive")
+        .set_ack(ack_ok());
+    if !messages.is_empty() {
+        let mut messages: Vec<_> = messages
+            .into_iter()
+            .sorted_by(|a, b| a.order.cmp(&b.order))
+            .map(|message| SubMsg::new(message.msg))
+            .collect();
+        if let Some(last_msg) = messages.last_mut() {
+            last_msg.reply_on = ReplyOn::Success;
+            last_msg.id = RECEIVE_ID;
         }
-        Ok(response)
-    })()
-    .or_else(|err: ContractError| Ok(response.set_ack(ack_fail(err))))
+        REPLY_DATA.save(deps.storage, &id)?;
+        response = response.add_submessages(messages)
+    }
+    Ok(response)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
