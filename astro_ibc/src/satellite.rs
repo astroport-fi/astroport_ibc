@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
+    /// Address which is able to update contracts' parameters
+    pub owner: String,
     /// ASTRO denom on the remote chain.
     pub astro_denom: String,
     /// Channel used to transfer Astro tokens
@@ -31,7 +33,26 @@ pub struct UpdateConfigMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     TransferAstro {},
-    UpdateConfig { update_params: UpdateConfigMsg },
+    UpdateConfig {
+        update_params: UpdateConfigMsg,
+    },
+    /// Creates a request to change contract ownership
+    /// ## Executor
+    /// Only the current owner can execute this.
+    ProposeNewOwner {
+        /// The newly proposed owner
+        owner: String,
+        /// The validity period of the proposal to change the contract owner
+        expires_in: u64,
+    },
+    /// Removes a request to change contract ownership
+    /// ## Executor
+    /// Only the current owner can execute this
+    DropOwnershipProposal {},
+    /// Claims contract ownership
+    /// ## Executor
+    /// Only the newly proposed owner can execute this
+    ClaimOwnership {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
