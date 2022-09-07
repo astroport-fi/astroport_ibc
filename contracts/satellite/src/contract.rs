@@ -1,18 +1,13 @@
-use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
-use astro_ibc::astroport_governance::astroport::common::{
-    claim_ownership, drop_ownership_proposal, propose_new_owner,
-};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Reply, Response,
-    StdError,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 
 use crate::error::ContractError;
-use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
+use crate::state::{Config, CONFIG, REPLY_DATA, RESULTS};
 use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -32,7 +27,6 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, msg.owner)?,
             astro_denom: msg.astro_denom,
             main_controller_port: format!("wasm.{}", msg.main_controller),
             main_maker: msg.main_maker,
@@ -83,7 +77,7 @@ pub fn execute(
         }
         ExecuteMsg::UpdateConfig { update_params } => {
             CONFIG.update(deps.storage, |mut config| {
-                if config.owner == info.sender {
+                if env.contract.address == info.sender {
                     config.update(update_params);
                     Ok(config)
                 } else {
@@ -91,37 +85,6 @@ pub fn execute(
                 }
             })?;
             Ok(Response::new().add_attribute("action", "update_config"))
-        }
-        ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
-            let config = CONFIG.load(deps.storage)?;
-
-            propose_new_owner(
-                deps,
-                info,
-                env,
-                owner,
-                expires_in,
-                config.owner,
-                OWNERSHIP_PROPOSAL,
-            )
-            .map_err(Into::into)
-        }
-        ExecuteMsg::DropOwnershipProposal {} => {
-            let config = CONFIG.load(deps.storage)?;
-
-            drop_ownership_proposal(deps, info, config.owner, OWNERSHIP_PROPOSAL)
-                .map_err(Into::into)
-        }
-        ExecuteMsg::ClaimOwnership {} => {
-            claim_ownership(deps, info, env, OWNERSHIP_PROPOSAL, |deps, new_owner| {
-                CONFIG
-                    .update::<_, StdError>(deps.storage, |mut v| {
-                        v.owner = new_owner;
-                        Ok(v)
-                    })
-                    .map(|_| ())
-            })
-            .map_err(Into::into)
         }
     }
 }
