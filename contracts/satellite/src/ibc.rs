@@ -73,13 +73,10 @@ pub fn ibc_channel_connect(
     let mut config = CONFIG.load(deps.storage)?;
     match config.gov_channel {
         Some(channel_id) => {
-            return Err(ContractError::ChannelAlreadyCreated { channel_id });
+            return Err(ContractError::ChannelAlreadyEstablished { channel_id });
         }
         None => {
-            if channel.counterparty_endpoint.port_id == config.main_controller_port {
-                config.gov_channel = Some(channel.endpoint.channel_id.clone());
-                CONFIG.save(deps.storage, &config)?;
-            } else {
+            if channel.counterparty_endpoint.port_id != config.main_controller_port {
                 return Err(ContractError::InvalidSourcePort {
                     invalid: channel.endpoint.port_id.clone(),
                     valid: config.main_controller_port,
@@ -99,7 +96,19 @@ pub fn ibc_packet_receive(
     deps: DepsMut,
     _env: Env,
     msg: IbcPacketReceiveMsg,
-) -> Result<IbcReceiveResponse, Never> {
+) -> Result<IbcReceiveResponse, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    match config.gov_channel {
+        Some(gov_channel) if gov_channel != msg.packet.dest.channel_id => {
+            return Err(ContractError::InvalidGovernanceChannel {
+                invalid: msg.packet.dest.channel_id,
+                valid: gov_channel,
+            })
+        }
+        None => return Err(ContractError::GovernanceChannelNotFound {}),
+        _ => {}
+    }
+
     let response = IbcReceiveResponse::new().add_attribute("action", "ibc_packet_receive");
 
     (|| {

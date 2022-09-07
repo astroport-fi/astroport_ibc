@@ -23,6 +23,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub struct UpdateConfigMsg {
     pub astro_denom: Option<String>,
+    pub gov_channel: Option<String>,
     pub main_controller_port: Option<String>,
     pub main_maker: Option<String>,
     pub transfer_channel: Option<String>,
@@ -33,9 +34,7 @@ pub struct UpdateConfigMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     TransferAstro {},
-    UpdateConfig {
-        update_params: UpdateConfigMsg,
-    },
+    UpdateConfig(UpdateConfigMsg),
     /// Creates a request to change contract ownership
     /// ## Executor
     /// Only the current owner can execute this.

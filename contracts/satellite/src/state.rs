@@ -30,6 +30,10 @@ impl Config {
             self.astro_denom = astro_denom;
         }
 
+        if let Some(gov_channel) = params.gov_channel {
+            self.gov_channel = Some(gov_channel);
+        }
+
         if let Some(main_controller_port) = params.main_controller_port {
             self.main_controller_port = main_controller_port;
         }

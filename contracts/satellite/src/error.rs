@@ -17,8 +17,14 @@ pub enum ContractError {
     #[error("Invalid reply id")]
     InvalidReplyId {},
 
-    #[error("Channel already created {channel_id}")]
-    ChannelAlreadyCreated { channel_id: String },
+    #[error("Channel already established: {channel_id}")]
+    ChannelAlreadyEstablished { channel_id: String },
+
+    #[error("Invalid governance channel: {invalid}. Should be {valid}")]
+    InvalidGovernanceChannel { invalid: String, valid: String },
+
+    #[error("Governance is not established yet")]
+    GovernanceChannelNotFound {},
 
     #[error("Invalid source port {invalid}. Should be : {valid}")]
     InvalidSourcePort { invalid: String, valid: String },

@@ -81,10 +81,10 @@ pub fn execute(
                 .add_message(msg)
                 .add_attribute("action", "transfer_astro"))
         }
-        ExecuteMsg::UpdateConfig { update_params } => {
+        ExecuteMsg::UpdateConfig(params) => {
             CONFIG.update(deps.storage, |mut config| {
                 if config.owner == info.sender {
-                    config.update(update_params);
+                    config.update(params);
                     Ok(config)
                 } else {
                     Err(ContractError::Unauthorized {})
