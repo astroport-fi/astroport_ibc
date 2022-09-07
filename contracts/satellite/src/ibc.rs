@@ -96,22 +96,22 @@ pub fn ibc_packet_receive(
     deps: DepsMut,
     _env: Env,
     msg: IbcPacketReceiveMsg,
-) -> Result<IbcReceiveResponse, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    match config.gov_channel {
-        Some(gov_channel) if gov_channel != msg.packet.dest.channel_id => {
-            return Err(ContractError::InvalidGovernanceChannel {
-                invalid: msg.packet.dest.channel_id,
-                valid: gov_channel,
-            })
-        }
-        None => return Err(ContractError::GovernanceChannelNotFound {}),
-        _ => {}
-    }
-
+) -> Result<IbcReceiveResponse, Never> {
     let response = IbcReceiveResponse::new().add_attribute("action", "ibc_packet_receive");
 
     (|| {
+        let config = CONFIG.load(deps.storage)?;
+        match config.gov_channel {
+            Some(gov_channel) if gov_channel != msg.packet.dest.channel_id => {
+                return Err(ContractError::InvalidGovernanceChannel {
+                    invalid: msg.packet.dest.channel_id,
+                    valid: gov_channel,
+                })
+            }
+            None => return Err(ContractError::GovernanceChannelNotFound {}),
+            _ => {}
+        }
+
         let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
         let mut response = response.clone().set_ack(ack_ok());
         if !messages.is_empty() {
