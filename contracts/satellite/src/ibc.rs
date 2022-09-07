@@ -152,19 +152,9 @@ pub fn ibc_packet_ack(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_channel_close(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _channel: IbcChannelCloseMsg,
-) -> Result<IbcBasicResponse, ContractError> {
-    CONFIG.update::<_, StdError>(deps.storage, |config| {
-        config
-            .gov_channel
-            .ok_or_else(|| StdError::generic_err("Channel was not found"))?;
-        Ok(Config {
-            gov_channel: None,
-            ..config
-        })
-    })?;
-
-    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_close"))
+) -> StdResult<IbcBasicResponse> {
+    Err(StdError::generic_err("Closing channel is not allowed"))
 }

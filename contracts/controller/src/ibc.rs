@@ -130,5 +130,5 @@ pub fn ibc_channel_close(
     _env: Env,
     _channel: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_close"))
+    Err(StdError::generic_err("Closing channel is not allowed"))
 }
