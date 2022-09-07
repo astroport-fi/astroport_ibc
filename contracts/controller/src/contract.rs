@@ -2,18 +2,18 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Response, StdError, StdResult,
+    Response, StdError,
 };
 use cw2::set_contract_version;
 
-use crate::error::ContractError;
 use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
 use astro_ibc::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-
-use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
 use astro_ibc::controller::{ExecuteMsg, IbcProposal, IbcProposalState, InstantiateMsg};
+
+use crate::error::ContractError;
+use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -1,7 +1,5 @@
-use cosmwasm_std::{Binary, StdError};
+use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Never is a placeholder to ensure we don't return any errors

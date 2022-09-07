@@ -1,11 +1,9 @@
 use cosmwasm_std::{
-    entry_point, from_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
+    entry_point, from_binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError,
     StdResult,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use astro_ibc::controller::{IbcProposal, IbcProposalState};
 use astro_ibc::satellite::IbcAckResult;
