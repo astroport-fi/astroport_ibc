@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    wasm_execute, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Reply, Response, StdError,
+    to_binary, wasm_execute, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout,
+    MessageInfo, Reply, Response, StdError,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -149,8 +149,13 @@ fn check_messages(env: Env, messages: Vec<ProposalMessage>) -> Result<Response, 
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> Result<Binary, ContractError> {
-    unimplemented!()
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
+    match msg {
+        QueryMsg::ProposalState { id } => {
+            let state = RESULTS.load(deps.storage, id.into())?;
+            Ok(to_binary(&state)?)
+        }
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

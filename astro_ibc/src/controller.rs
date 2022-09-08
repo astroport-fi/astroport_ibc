@@ -59,3 +59,9 @@ pub enum ExecuteMsg {
     /// Only the newly proposed owner can execute this
     ClaimOwnership {},
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsg {
+    ProposalState { id: u64 },
+}

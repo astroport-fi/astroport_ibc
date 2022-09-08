@@ -11,6 +11,7 @@ use astro_ibc::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
 use astro_ibc::controller::{ExecuteMsg, IbcProposal, IbcProposalState, InstantiateMsg};
+use astro_ibc::satellite::QueryMsg;
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
@@ -107,8 +108,13 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: Empty) -> Result<Binary, ContractError> {
-    unimplemented!()
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
+    match msg {
+        QueryMsg::ProposalState { id } => {
+            let state = PROPOSAL_STATE.load(deps.storage, id.into())?;
+            Ok(to_binary(&state)?)
+        }
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
