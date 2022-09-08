@@ -31,4 +31,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     PaymentError(#[from] PaymentError),
+
+    #[error("Messages check passed. Nothing was committed to the blockchain")]
+    MessagesCheckPassed {},
 }

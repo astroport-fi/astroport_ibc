@@ -1,3 +1,4 @@
+use astroport_governance::assembly::ProposalMessage;
 use cosmwasm_std::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -35,6 +36,8 @@ pub struct UpdateConfigMsg {
 pub enum ExecuteMsg {
     TransferAstro {},
     UpdateConfig(UpdateConfigMsg),
+    CheckMessages(Vec<ProposalMessage>),
+    CheckMessagesPassed {},
     /// Creates a request to change contract ownership
     /// ## Executor
     /// Only the current owner can execute this.

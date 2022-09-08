@@ -1,19 +1,22 @@
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{
+    wasm_execute, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
+    Reply, Response, StdError,
+};
+use cw2::set_contract_version;
+use cw_utils::must_pay;
+use itertools::Itertools;
+
+use astro_ibc::astroport_governance::assembly::ProposalMessage;
 use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
 use astro_ibc::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Reply, Response,
-    StdError,
-};
-use cw2::set_contract_version;
-use cw_utils::must_pay;
+use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
-use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -92,6 +95,8 @@ pub fn execute(
             })?;
             Ok(Response::new().add_attribute("action", "update_config"))
         }
+        ExecuteMsg::CheckMessages(proposal_messages) => check_messages(env, proposal_messages),
+        ExecuteMsg::CheckMessagesPassed {} => Err(ContractError::MessagesCheckPassed {}),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
             let config = CONFIG.load(deps.storage)?;
 
@@ -124,6 +129,23 @@ pub fn execute(
             .map_err(Into::into)
         }
     }
+}
+
+fn check_messages(env: Env, messages: Vec<ProposalMessage>) -> Result<Response, ContractError> {
+    let mut messages: Vec<_> = messages
+        .into_iter()
+        .sorted_by(|a, b| a.order.cmp(&b.order))
+        .map(|message| message.msg)
+        .collect();
+    messages.push(CosmosMsg::Wasm(wasm_execute(
+        env.contract.address,
+        &ExecuteMsg::CheckMessagesPassed {},
+        vec![],
+    )?));
+
+    Ok(Response::new()
+        .add_attribute("action", "check_messages")
+        .add_messages(messages))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
