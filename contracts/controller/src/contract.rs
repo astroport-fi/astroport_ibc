@@ -121,3 +121,60 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     Ok(Response::default())
 }
+
+#[cfg(test)]
+mod tests {
+    use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128, Uint64};
+
+    use crate::test_utils::{init_contract, mock_all, OWNER};
+    use astro_ibc::astroport_governance::assembly::ProposalMessage;
+
+    use super::*;
+
+    #[test]
+    fn test_ibc_execute() {
+        let (mut deps, env, info) = mock_all(OWNER);
+
+        init_contract(&mut deps, env.clone(), info.clone());
+
+        let channel_id = "channel-0".to_string();
+        let proposal_id = 1;
+        let proposal_msg = ProposalMessage {
+            order: Uint64::new(1),
+            msg: CosmosMsg::Bank(BankMsg::Send {
+                to_address: "foreign_addr".to_string(),
+                amount: vec![Coin {
+                    denom: "stake".to_string(),
+                    amount: Uint128::new(100),
+                }],
+            }),
+        };
+        let msg = ExecuteMsg::IbcExecuteProposal {
+            channel_id,
+            proposal_id,
+            messages: vec![proposal_msg.clone()],
+        };
+        let resp = execute(deps.as_mut(), env.clone(), info, msg.clone()).unwrap();
+
+        assert_eq!(resp.messages.len(), 1);
+        let real_timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(360));
+        match &resp.messages[0].msg {
+            CosmosMsg::Ibc(IbcMsg::SendPacket {
+                channel_id,
+                timeout,
+                data,
+            }) if channel_id == channel_id && timeout == &real_timeout => {
+                let proposal: IbcProposal = from_binary(&data).unwrap();
+                assert_eq!(proposal.id, proposal_id);
+                assert_eq!(proposal.messages.len(), 1);
+                assert_eq!(proposal.messages[0], proposal_msg);
+            }
+            _ => panic!("Unexpected message"),
+        }
+
+        let state = PROPOSAL_STATE
+            .load(deps.as_ref().storage, proposal_id.into())
+            .unwrap();
+        assert_eq!(state, IbcProposalState::InProgress {})
+    }
+}

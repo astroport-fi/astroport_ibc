@@ -91,7 +91,9 @@ pub fn ibc_packet_timeout(
             }
         }
     })?;
-    Ok(IbcBasicResponse::new().add_attribute("action", "packet_timeout"))
+    Ok(IbcBasicResponse::new()
+        .add_attribute("action", "packet_timeout")
+        .add_attribute("proposal_id", ibc_proposal.id.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -121,7 +123,9 @@ pub fn ibc_packet_ack(
             }
         }
     })?;
-    Ok(IbcBasicResponse::new().add_attribute("action", "packet_ack"))
+    Ok(IbcBasicResponse::new()
+        .add_attribute("action", "packet_ack")
+        .add_attribute("proposal_id", ibc_proposal.id.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -131,4 +135,167 @@ pub fn ibc_channel_close(
     _channel: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
     Err(StdError::generic_err("Closing channel is not allowed"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::contract::execute;
+    use crate::test_utils::{init_contract, mock_all, OWNER};
+    use astro_ibc::controller::ExecuteMsg;
+    use cosmwasm_std::testing::{
+        mock_ibc_channel_close_init, mock_ibc_packet_ack, mock_ibc_packet_timeout,
+    };
+    use cosmwasm_std::{attr, Binary, IbcAcknowledgement};
+
+    fn mock_ibc_execute_proposal(channel_id: &str, proposal_id: u64) -> ExecuteMsg {
+        ExecuteMsg::IbcExecuteProposal {
+            channel_id: channel_id.to_string(),
+            proposal_id,
+            messages: vec![],
+        }
+    }
+
+    #[test]
+    fn channel_ack() {
+        let (mut deps, env, info) = mock_all(OWNER);
+        init_contract(&mut deps, env.clone(), info.clone());
+
+        let channel_id = "channel-0";
+        let mut proposal_id = 1;
+
+        let msg = mock_ibc_execute_proposal(channel_id, proposal_id);
+        execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+        // Ok acknowledgment
+        let ack_msg = mock_ibc_packet_ack(
+            channel_id,
+            &IbcProposal {
+                id: proposal_id,
+                messages: vec![],
+            },
+            IbcAcknowledgement::encode_json(&IbcAckResult::Ok(Binary::default())).unwrap(),
+        )
+        .unwrap();
+        let resp = ibc_packet_ack(deps.as_mut(), env.clone(), ack_msg).unwrap();
+
+        assert!(resp
+            .attributes
+            .contains(&attr("proposal_id", proposal_id.to_string())));
+        let state = PROPOSAL_STATE
+            .load(deps.as_ref().storage, proposal_id.into())
+            .unwrap();
+        assert_eq!(state, IbcProposalState::Succeed {});
+
+        // Failed proposal
+        proposal_id += 1;
+        let msg = mock_ibc_execute_proposal(channel_id, proposal_id);
+        execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+        let ack_msg = mock_ibc_packet_ack(
+            channel_id,
+            &IbcProposal {
+                id: proposal_id,
+                messages: vec![],
+            },
+            IbcAcknowledgement::encode_json(&IbcAckResult::Error("Some error".to_string()))
+                .unwrap(),
+        )
+        .unwrap();
+        let resp = ibc_packet_ack(deps.as_mut(), env.clone(), ack_msg).unwrap();
+
+        assert!(resp
+            .attributes
+            .contains(&attr("proposal_id", proposal_id.to_string())));
+        let state = PROPOSAL_STATE
+            .load(deps.as_ref().storage, proposal_id.into())
+            .unwrap();
+        assert_eq!(state, IbcProposalState::Failed {});
+        // Previous proposal state was not changed
+        let state = PROPOSAL_STATE
+            .load(deps.as_ref().storage, (proposal_id - 1).into())
+            .unwrap();
+        assert_eq!(state, IbcProposalState::Succeed {});
+
+        // Proposal with unknown id
+        let ack_msg = mock_ibc_packet_ack(
+            channel_id,
+            &IbcProposal {
+                id: 128,
+                messages: vec![],
+            },
+            IbcAcknowledgement::encode_json(&IbcAckResult::Error("Some error".to_string()))
+                .unwrap(),
+        )
+        .unwrap();
+        let err = ibc_packet_ack(deps.as_mut(), env, ack_msg).unwrap_err();
+        assert_eq!(
+            err,
+            StdError::generic_err("Proposal 128 was not executed via controller")
+        )
+    }
+
+    #[test]
+    fn channel_timeout() {
+        let (mut deps, env, info) = mock_all(OWNER);
+        init_contract(&mut deps, env.clone(), info.clone());
+
+        let channel_id = "channel-0";
+        let proposal_id = 1;
+
+        let msg = mock_ibc_execute_proposal(channel_id, proposal_id);
+        execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+        let timeout_msg = mock_ibc_packet_timeout(
+            &channel_id,
+            &IbcProposal {
+                id: proposal_id,
+                messages: vec![],
+            },
+        )
+        .unwrap();
+        let resp = ibc_packet_timeout(deps.as_mut(), env.clone(), timeout_msg.clone()).unwrap();
+        assert!(resp
+            .attributes
+            .contains(&attr("proposal_id", proposal_id.to_string())));
+
+        let state = PROPOSAL_STATE
+            .load(deps.as_ref().storage, proposal_id.into())
+            .unwrap();
+        assert_eq!(state, IbcProposalState::Failed {});
+
+        // Another timeout packet will fail
+        let err = ibc_packet_timeout(deps.as_mut(), env.clone(), timeout_msg).unwrap_err();
+        assert_eq!(
+            err,
+            StdError::generic_err(format!(
+                "Proposal id: {} state is already {}",
+                proposal_id,
+                IbcProposalState::Failed {}
+            ))
+        );
+
+        // timeout msg with unknown proposal id will fail
+        let timeout_msg = mock_ibc_packet_timeout(
+            &channel_id,
+            &IbcProposal {
+                id: 128,
+                messages: vec![],
+            },
+        )
+        .unwrap();
+        let err = ibc_packet_timeout(deps.as_mut(), env.clone(), timeout_msg).unwrap_err();
+        assert_eq!(
+            err,
+            StdError::generic_err("Proposal 128 was not executed via controller")
+        )
+    }
+
+    #[test]
+    fn channel_close() {
+        let close_msg =
+            mock_ibc_channel_close_init("channel-0", IbcOrder::Unordered, IBC_APP_VERSION);
+        let (mut deps, env, _) = mock_all("random");
+        let err = ibc_channel_close(deps.as_mut(), env, close_msg).unwrap_err();
+        assert_eq!(err, StdError::generic_err("Closing channel is not allowed"))
+    }
 }
