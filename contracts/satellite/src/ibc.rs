@@ -78,7 +78,7 @@ pub fn ibc_channel_connect(
         None => {
             if channel.counterparty_endpoint.port_id != config.main_controller_port {
                 return Err(ContractError::InvalidSourcePort {
-                    invalid: channel.endpoint.port_id.clone(),
+                    invalid: channel.counterparty_endpoint.port_id.clone(),
                     valid: config.main_controller_port,
                 });
             }
@@ -165,4 +165,184 @@ pub fn ibc_channel_close(
     _channel: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
     Err(StdError::generic_err("Closing channel is not allowed"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::contract::{execute, instantiate};
+    use astro_ibc::astroport_governance::assembly::ProposalMessage;
+    use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
+        MockQuerier, MockStorage,
+    };
+    use cosmwasm_std::{CosmosMsg, Empty, MessageInfo, OwnedDeps};
+
+    pub const OWNER: &str = "owner";
+    pub const CONTROLLER: &str = "controller";
+    pub const GOV_CHANNEL: &str = "channel-20";
+
+    pub fn mock_all(
+        sender: &str,
+    ) -> (
+        OwnedDeps<MockStorage, MockApi, MockQuerier>,
+        Env,
+        MessageInfo,
+    ) {
+        let deps = mock_dependencies();
+        let env = mock_env();
+        let info = mock_info(sender, &[]);
+        (deps, env, info)
+    }
+
+    pub fn init_contract(deps: DepsMut, env: Env, info: MessageInfo) {
+        instantiate(
+            deps,
+            env,
+            info,
+            InstantiateMsg {
+                owner: OWNER.to_string(),
+                astro_denom: "".to_string(),
+                transfer_channel: "".to_string(),
+                main_controller: CONTROLLER.to_string(),
+                main_maker: "".to_string(),
+                timeout: 0,
+            },
+        )
+        .unwrap();
+    }
+
+    fn mock_ibc_channel_connect_ack(
+        my_channel_id: &str,
+        order: IbcOrder,
+        version: &str,
+        their_port: &str,
+    ) -> IbcChannelConnectMsg {
+        let mut mocked_channel = mock_ibc_channel(my_channel_id, order, version);
+        mocked_channel.counterparty_endpoint.port_id = their_port.to_string();
+        IbcChannelConnectMsg::new_ack(mocked_channel, version)
+    }
+
+    #[test]
+    fn channel_open() {
+        let (mut deps, env, info) = mock_all(OWNER);
+        init_contract(deps.as_mut(), env.clone(), info.clone());
+
+        // Trying to establish channel with wrong remote controller address
+        let connect_msg = mock_ibc_channel_connect_ack(
+            "channel-0",
+            IBC_ORDERING,
+            IBC_APP_VERSION,
+            "wasm.wrong_controller_addr",
+        );
+        let err = ibc_channel_connect(deps.as_mut(), env.clone(), connect_msg).unwrap_err();
+        assert_eq!(
+            err,
+            ContractError::InvalidSourcePort {
+                invalid: "wasm.wrong_controller_addr".to_string(),
+                valid: format!("wasm.{}", CONTROLLER),
+            }
+        );
+
+        // Correct parameters
+        let connect_msg = mock_ibc_channel_connect_ack(
+            GOV_CHANNEL,
+            IBC_ORDERING,
+            IBC_APP_VERSION,
+            &format!("wasm.{}", CONTROLLER),
+        );
+        ibc_channel_connect(deps.as_mut(), env.clone(), connect_msg).unwrap();
+
+        // Setup governance channel
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            info,
+            ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+                astro_denom: None,
+                gov_channel: Some(GOV_CHANNEL.to_string()),
+                main_controller_port: None,
+                main_maker: None,
+                transfer_channel: None,
+                timeout: None,
+            }),
+        )
+        .unwrap();
+
+        // Once gov channel was set up new channels can not be established
+        let connect_msg = mock_ibc_channel_connect_ack(
+            "channel-21",
+            IBC_ORDERING,
+            IBC_APP_VERSION,
+            &format!("wasm.{}", CONTROLLER),
+        );
+        let err = ibc_channel_connect(deps.as_mut(), env.clone(), connect_msg).unwrap_err();
+        assert_eq!(
+            err,
+            ContractError::ChannelAlreadyEstablished {
+                channel_id: GOV_CHANNEL.to_string()
+            }
+        )
+    }
+
+    #[test]
+    fn packet_receive() {
+        let (mut deps, env, info) = mock_all(OWNER);
+        init_contract(deps.as_mut(), env.clone(), info.clone());
+
+        // Governance channel was not set yet
+        let msg = mock_ibc_packet_recv("random_channel", &()).unwrap();
+        // However, we will never receive error here, but encoded error message in .acknowledgement field
+        let resp = ibc_packet_receive(deps.as_mut(), env.clone(), msg).unwrap();
+        let ack: IbcAckResult = from_binary(&resp.acknowledgement).unwrap();
+        assert_eq!(
+            ack,
+            IbcAckResult::Error("Governance is not established yet".to_string())
+        );
+
+        // Setup governance channel
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            info,
+            ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+                astro_denom: None,
+                gov_channel: Some(GOV_CHANNEL.to_string()),
+                main_controller_port: None,
+                main_maker: None,
+                transfer_channel: None,
+                timeout: None,
+            }),
+        )
+        .unwrap();
+
+        // Trying to send messages via wrong channel
+        let msg = mock_ibc_packet_recv("channel-5", &()).unwrap();
+        let resp = ibc_packet_receive(deps.as_mut(), env.clone(), msg).unwrap();
+        let ack: IbcAckResult = from_binary(&resp.acknowledgement).unwrap();
+        assert_eq!(
+            ack,
+            IbcAckResult::Error(format!(
+                "Invalid governance channel: channel-5. Should be {}",
+                GOV_CHANNEL
+            ))
+        );
+
+        let ibc_proposal = IbcProposal {
+            id: 1,
+            messages: vec![ProposalMessage {
+                order: 1u64.into(),
+                // pass any valid CosmosMsg message.
+                // The meaning of this msg doesn't matter as this is just a unit test
+                msg: CosmosMsg::Custom(Empty {}),
+            }],
+        };
+        // Send messages via governance channel
+        let msg = mock_ibc_packet_recv(GOV_CHANNEL, &ibc_proposal).unwrap();
+        let resp = ibc_packet_receive(deps.as_mut(), env.clone(), msg).unwrap();
+        assert_eq!(resp.messages.last().unwrap().reply_on, ReplyOn::Success);
+        let ack: IbcAckResult = from_binary(&resp.acknowledgement).unwrap();
+        assert_eq!(ack, IbcAckResult::Ok(b"ok".into()));
+    }
 }
