@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "astroport"
 version = "2.0.0"
-source = "git+https://github.com/astroport-fi/astroport-core.git?branch=main#5960577e25aa5adc28581db82d800c13d0f3a947"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=main#b47f5ad5fa546b0e176401181fb31c5ca0412d37"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.1.0"
-source = "git+https://github.com/astroport-fi/astroport-governance#c689eaf38f71d7daca213616949d6651ec35c110"
+source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=assembly_ibc_support#a3e471887b9ed6240b731760c6ca32f1d18ebb61"
 dependencies = [
  "astroport",
  "cosmwasm-std",

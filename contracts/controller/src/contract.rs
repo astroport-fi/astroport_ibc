@@ -1,3 +1,4 @@
+use astro_ibc::astroport_governance::assembly::ProposalStatus;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -10,7 +11,7 @@ use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
 use astro_ibc::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use astro_ibc::controller::{ExecuteMsg, IbcProposal, IbcProposalState, InstantiateMsg};
+use astro_ibc::controller::{ExecuteMsg, IbcProposal, InstantiateMsg};
 use astro_ibc::satellite::QueryMsg;
 
 use crate::error::ContractError;
@@ -65,7 +66,7 @@ pub fn execute(
             PROPOSAL_STATE.save(
                 deps.storage,
                 proposal_id.into(),
-                &IbcProposalState::InProgress {},
+                &ProposalStatus::InProgress {},
             )?;
 
             Ok(Response::new()
@@ -175,6 +176,6 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, IbcProposalState::InProgress {})
+        assert_eq!(state, ProposalStatus::InProgress {})
     }
 }

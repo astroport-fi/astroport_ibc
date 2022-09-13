@@ -1,3 +1,5 @@
+use astro_ibc::astroport_governance::assembly::ProposalStatus;
+use astro_ibc::controller::IbcProposal;
 use cosmwasm_std::{
     entry_point, from_binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
@@ -5,7 +7,6 @@ use cosmwasm_std::{
     StdResult,
 };
 
-use astro_ibc::controller::{IbcProposal, IbcProposalState};
 use astro_ibc::satellite::IbcAckResult;
 
 use crate::state::PROPOSAL_STATE;
@@ -81,8 +82,8 @@ pub fn ibc_packet_timeout(
             ibc_proposal.id
         ))),
         Some(state) => {
-            if state == (IbcProposalState::InProgress {}) {
-                Ok(IbcProposalState::Failed {})
+            if state == (ProposalStatus::InProgress {}) {
+                Ok(ProposalStatus::Failed {})
             } else {
                 Err(StdError::generic_err(format!(
                     "Proposal id: {} state is already {}",
@@ -110,10 +111,10 @@ pub fn ibc_packet_ack(
             ibc_proposal.id
         ))),
         Some(state) => {
-            if state == (IbcProposalState::InProgress {}) {
+            if state == (ProposalStatus::InProgress {}) {
                 match ibc_ack {
-                    IbcAckResult::Ok(_) => Ok(IbcProposalState::Succeed {}),
-                    IbcAckResult::Error(_) => Ok(IbcProposalState::Failed {}),
+                    IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
+                    IbcAckResult::Error(_) => Ok(ProposalStatus::Failed {}),
                 }
             } else {
                 Err(StdError::generic_err(format!(
@@ -185,7 +186,7 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, IbcProposalState::Succeed {});
+        assert_eq!(state, ProposalStatus::Executed {});
 
         // Failed proposal
         proposal_id += 1;
@@ -209,12 +210,12 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, IbcProposalState::Failed {});
+        assert_eq!(state, ProposalStatus::Failed {});
         // Previous proposal state was not changed
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, (proposal_id - 1).into())
             .unwrap();
-        assert_eq!(state, IbcProposalState::Succeed {});
+        assert_eq!(state, ProposalStatus::Executed {});
 
         // Proposal with unknown id
         let ack_msg = mock_ibc_packet_ack(
@@ -261,7 +262,7 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, IbcProposalState::Failed {});
+        assert_eq!(state, ProposalStatus::Failed {});
 
         // Another timeout packet will fail
         let err = ibc_packet_timeout(deps.as_mut(), env.clone(), timeout_msg).unwrap_err();
@@ -270,7 +271,7 @@ mod tests {
             StdError::generic_err(format!(
                 "Proposal id: {} state is already {}",
                 proposal_id,
-                IbcProposalState::Failed {}
+                ProposalStatus::Failed {}
             ))
         );
 

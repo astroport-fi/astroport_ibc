@@ -1,6 +1,6 @@
+use astro_ibc::astroport_governance::assembly::ProposalStatus;
 use astro_ibc::astroport_governance::astroport::common::OwnershipProposal;
 use astro_ibc::astroport_governance::U64Key;
-use astro_ibc::controller::IbcProposalState;
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
@@ -16,7 +16,7 @@ pub struct Config {
 
 pub const CONFIG: Item<Config> = Item::new("config");
 
-pub const PROPOSAL_STATE: Map<U64Key, IbcProposalState> = Map::new("proposal_state");
+pub const PROPOSAL_STATE: Map<U64Key, ProposalStatus> = Map::new("proposal_state");
 
 /// Contains a proposal to change contract ownership.
 pub const OWNERSHIP_PROPOSAL: Item<OwnershipProposal> = Item::new("ownership_proposal");
