@@ -1,15 +1,15 @@
 use astro_ibc::astroport_governance::assembly::ProposalStatus;
 use astro_ibc::controller::IbcProposal;
 use cosmwasm_std::{
-    entry_point, from_binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
-    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
-    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError,
-    StdResult,
+    entry_point, from_binary, wasm_execute, Addr, CosmosMsg, DepsMut, Env, Ibc3ChannelOpenResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
 use astro_ibc::satellite::IbcAckResult;
 
-use crate::state::PROPOSAL_STATE;
+use crate::state::{CONFIG, PROPOSAL_STATE};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -69,6 +69,21 @@ pub fn ibc_packet_receive(
     unimplemented!()
 }
 
+fn confirm_assembly(
+    assembly: &Addr,
+    proposal_id: u64,
+    status: ProposalStatus,
+) -> StdResult<SubMsg> {
+    Ok(SubMsg::new(wasm_execute(
+        assembly,
+        &astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+            proposal_id,
+            status,
+        },
+        vec![],
+    )?))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_timeout(
     deps: DepsMut,
@@ -76,23 +91,31 @@ pub fn ibc_packet_timeout(
     msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
     let ibc_proposal: IbcProposal = from_binary(&msg.packet.data)?;
-    PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
-        None => Err(StdError::generic_err(format!(
-            "Proposal {} was not executed via controller",
-            ibc_proposal.id
-        ))),
-        Some(state) => {
-            if state == (ProposalStatus::InProgress {}) {
-                Ok(ProposalStatus::Failed {})
-            } else {
-                Err(StdError::generic_err(format!(
-                    "Proposal id: {} state is already {}",
-                    ibc_proposal.id, state
-                )))
+    let new_status =
+        PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
+            None => Err(StdError::generic_err(format!(
+                "Proposal {} was not executed via controller",
+                ibc_proposal.id
+            ))),
+            Some(state) => {
+                if state == (ProposalStatus::InProgress {}) {
+                    Ok(ProposalStatus::Failed {})
+                } else {
+                    Err(StdError::generic_err(format!(
+                        "Proposal id: {} state is already {}",
+                        ibc_proposal.id, state
+                    )))
+                }
             }
-        }
-    })?;
+        })?;
+    let config = CONFIG.load(deps.storage)?;
+
     Ok(IbcBasicResponse::new()
+        .add_submessage(confirm_assembly(
+            &config.assembly,
+            ibc_proposal.id,
+            new_status,
+        )?)
         .add_attribute("action", "packet_timeout")
         .add_attribute("proposal_id", ibc_proposal.id.to_string()))
 }
@@ -105,26 +128,34 @@ pub fn ibc_packet_ack(
 ) -> StdResult<IbcBasicResponse> {
     let ibc_ack: IbcAckResult = from_binary(&msg.acknowledgement.data)?;
     let ibc_proposal: IbcProposal = from_binary(&msg.original_packet.data)?;
-    PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
-        None => Err(StdError::generic_err(format!(
-            "Proposal {} was not executed via controller",
-            ibc_proposal.id
-        ))),
-        Some(state) => {
-            if state == (ProposalStatus::InProgress {}) {
-                match ibc_ack {
-                    IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
-                    IbcAckResult::Error(_) => Ok(ProposalStatus::Failed {}),
+    let new_status =
+        PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
+            None => Err(StdError::generic_err(format!(
+                "Proposal {} was not executed via controller",
+                ibc_proposal.id
+            ))),
+            Some(state) => {
+                if state == (ProposalStatus::InProgress {}) {
+                    match ibc_ack {
+                        IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
+                        IbcAckResult::Error(_) => Ok(ProposalStatus::Failed {}),
+                    }
+                } else {
+                    Err(StdError::generic_err(format!(
+                        "Proposal id: {} state is already {}",
+                        ibc_proposal.id, state
+                    )))
                 }
-            } else {
-                Err(StdError::generic_err(format!(
-                    "Proposal id: {} state is already {}",
-                    ibc_proposal.id, state
-                )))
             }
-        }
-    })?;
+        })?;
+    let config = CONFIG.load(deps.storage)?;
+
     Ok(IbcBasicResponse::new()
+        .add_submessage(confirm_assembly(
+            &config.assembly,
+            ibc_proposal.id,
+            new_status,
+        )?)
         .add_attribute("action", "packet_ack")
         .add_attribute("proposal_id", ibc_proposal.id.to_string()))
 }
@@ -147,7 +178,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_ibc_channel_close_init, mock_ibc_packet_ack, mock_ibc_packet_timeout,
     };
-    use cosmwasm_std::{attr, Binary, IbcAcknowledgement};
+    use cosmwasm_std::{attr, to_binary, Binary, IbcAcknowledgement, WasmMsg};
 
     fn mock_ibc_execute_proposal(channel_id: &str, proposal_id: u64) -> ExecuteMsg {
         ExecuteMsg::IbcExecuteProposal {
@@ -188,6 +219,22 @@ mod tests {
             .unwrap();
         assert_eq!(state, ProposalStatus::Executed {});
 
+        assert_eq!(resp.messages.len(), 1);
+        let valid_msg = to_binary(
+            &&astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+                proposal_id,
+                status: ProposalStatus::Executed,
+            },
+        )
+        .unwrap();
+        assert!(matches!(
+            &resp.messages[0],
+            SubMsg {
+                msg: CosmosMsg::Wasm(WasmMsg::Execute { contract_addr, msg, .. }),
+                ..
+            } if contract_addr == OWNER && msg == &valid_msg
+        ));
+
         // Failed proposal
         proposal_id += 1;
         let msg = mock_ibc_execute_proposal(channel_id, proposal_id);
@@ -211,6 +258,23 @@ mod tests {
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
         assert_eq!(state, ProposalStatus::Failed {});
+
+        assert_eq!(resp.messages.len(), 1);
+        let valid_msg = to_binary(
+            &&astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+                proposal_id,
+                status: ProposalStatus::Failed,
+            },
+        )
+        .unwrap();
+        assert!(matches!(
+            &resp.messages[0],
+            SubMsg {
+                msg: CosmosMsg::Wasm(WasmMsg::Execute { contract_addr, msg, .. }),
+                ..
+            } if contract_addr == OWNER && msg == &valid_msg
+        ));
+
         // Previous proposal state was not changed
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, (proposal_id - 1).into())
@@ -263,6 +327,22 @@ mod tests {
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
         assert_eq!(state, ProposalStatus::Failed {});
+
+        assert_eq!(resp.messages.len(), 1);
+        let valid_msg = to_binary(
+            &&astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+                proposal_id,
+                status: ProposalStatus::Failed {},
+            },
+        )
+        .unwrap();
+        assert!(matches!(
+            &resp.messages[0],
+            SubMsg {
+                msg: CosmosMsg::Wasm(WasmMsg::Execute { contract_addr, msg, .. }),
+                ..
+            } if contract_addr == OWNER && msg == &valid_msg
+        ));
 
         // Another timeout packet will fail
         let err = ibc_packet_timeout(deps.as_mut(), env.clone(), timeout_msg).unwrap_err();

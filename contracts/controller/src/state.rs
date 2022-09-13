@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     /// Address that's allowed to change contract parameters
     pub owner: Addr,
+    /// Assembly address
+    pub assembly: Addr,
     /// when packet times out, measured on remote chain
     pub timeout: u64,
 }

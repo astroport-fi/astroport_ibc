@@ -31,6 +31,7 @@ pub fn init_contract(
         info,
         InstantiateMsg {
             owner: OWNER.to_string(),
+            assembly: OWNER.to_string(),
             timeout: 360,
         },
     )

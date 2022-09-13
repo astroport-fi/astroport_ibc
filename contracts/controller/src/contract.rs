@@ -32,6 +32,7 @@ pub fn instantiate(
         deps.storage,
         &Config {
             owner: addr_validate_to_lower(deps.api, &msg.owner)?,
+            assembly: addr_validate_to_lower(deps.api, &msg.assembly)?,
             timeout: msg.timeout,
         },
     )?;
@@ -74,6 +75,16 @@ pub fn execute(
                 .add_attribute("action", "ibc_execute")
                 .add_attribute("channel", channel_id))
         }
+        ExecuteMsg::UpdateConfig { new_assembly } => CONFIG
+            .update(deps.storage, |mut config| {
+                if info.sender == config.owner {
+                    config.assembly = addr_validate_to_lower(deps.api, &new_assembly)?;
+                    Ok(config)
+                } else {
+                    Err(ContractError::Unauthorized {})
+                }
+            })
+            .map(|_| Response::new().add_attribute("action", "update_config")),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
             let config = CONFIG.load(deps.storage)?;
 
