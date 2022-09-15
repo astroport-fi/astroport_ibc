@@ -1,5 +1,5 @@
 use astro_ibc::astroport_governance::assembly::ProposalMessage;
-use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
+use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg};
 use astro_satellite::contract::{execute, instantiate, query, reply};
 use astro_satellite::error::ContractError;
 use cosmwasm_std::{
@@ -29,14 +29,14 @@ fn noop_contract() -> Box<dyn Contract<Empty>> {
         Ok(Response::new())
     }
 
-    fn noop_query(_deps: Deps, _env: Env, _info: MessageInfo, _msg: Empty) -> StdResult<Binary> {
+    fn noop_query(_deps: Deps, _env: Env, _msg: Empty) -> StdResult<Binary> {
         Ok(Default::default())
     }
 
     Box::new(ContractWrapper::new_with_empty(
         noop_execute,
         noop_execute,
-        query,
+        noop_query,
     ))
 }
 

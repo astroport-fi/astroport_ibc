@@ -1,7 +1,7 @@
 use astro_ibc::astroport_governance::assembly::ProposalStatus;
 use astro_ibc::controller::IbcProposal;
 use cosmwasm_std::{
-    entry_point, from_binary, wasm_execute, Addr, CosmosMsg, DepsMut, Env, Ibc3ChannelOpenResponse,
+    entry_point, from_binary, wasm_execute, Addr, DepsMut, Env, Ibc3ChannelOpenResponse,
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
     IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, StdError, StdResult, SubMsg,
@@ -178,7 +178,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_ibc_channel_close_init, mock_ibc_packet_ack, mock_ibc_packet_timeout,
     };
-    use cosmwasm_std::{attr, to_binary, Binary, IbcAcknowledgement, WasmMsg};
+    use cosmwasm_std::{attr, to_binary, Binary, CosmosMsg, IbcAcknowledgement, WasmMsg};
 
     fn mock_ibc_execute_proposal(channel_id: &str, proposal_id: u64) -> ExecuteMsg {
         ExecuteMsg::IbcExecuteProposal {
