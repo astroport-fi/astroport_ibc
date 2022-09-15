@@ -1,10 +1,11 @@
-use astro_ibc::astroport_governance::astroport::common::OwnershipProposal;
-use astro_ibc::astroport_governance::U64Key;
-use astro_ibc::satellite::UpdateConfigMsg;
 use cosmwasm_std::{Addr, Env};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
+use astro_satellite_package::astroport_governance::U64Key;
+use astro_satellite_package::UpdateConfigMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {

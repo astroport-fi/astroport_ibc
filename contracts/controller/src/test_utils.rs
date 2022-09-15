@@ -1,9 +1,9 @@
 use crate::contract::instantiate;
-use astro_ibc::controller::InstantiateMsg;
 use cosmwasm_std::testing::{
     mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_std::{Env, MessageInfo, OwnedDeps};
+use ibc_controller_package::InstantiateMsg;
 
 pub const OWNER: &str = "owner";
 

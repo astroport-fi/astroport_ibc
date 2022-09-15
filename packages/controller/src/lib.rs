@@ -50,3 +50,5 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     ProposalState { id: u64 },
 }
+
+pub use astroport_governance;

@@ -8,12 +8,12 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use itertools::Itertools;
 
-use astro_ibc::astroport_governance::assembly::ProposalMessage;
-use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
-use astro_ibc::astroport_governance::astroport::common::{
+use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
+use astro_satellite_package::astroport_governance::astroport::asset::addr_validate_to_lower;
+use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};

@@ -9,20 +9,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26fa4d7e3f2eebadf743988fc8aec9fa9a9e82611acafd77c1462ed6262440a"
 
 [[package]]
-name = "astro-ibc"
-version = "0.1.0"
-dependencies = [
- "astroport-governance",
- "cosmwasm-std",
- "schemars",
- "serde",
-]
-
-[[package]]
 name = "astro-satellite"
 version = "0.1.0"
 dependencies = [
- "astro-ibc",
+ "astro-satellite-package",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -30,10 +20,21 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
+ "ibc-controller-package",
  "itertools",
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "astro-satellite-package"
+version = "0.1.0"
+dependencies = [
+ "astroport-governance",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -493,16 +494,27 @@ dependencies = [
 name = "ibc-controller"
 version = "0.1.0"
 dependencies = [
- "astro-ibc",
+ "astro-satellite-package",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-multi-test",
  "cw-storage-plus",
  "cw2",
+ "ibc-controller-package",
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "ibc-controller-package"
+version = "0.1.0"
+dependencies = [
+ "astroport-governance",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
 ]
 
 [[package]]

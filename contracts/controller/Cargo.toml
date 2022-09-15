@@ -25,7 +25,8 @@ cw2 = "0.13.2"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8"
 thiserror = { version = "1.0.31" }
-astro-ibc = { path = "../../astro_ibc" }
+ibc-controller-package = { path = "../../packages/controller" }
+astro-satellite-package = { path = "../../packages/satellite" }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

@@ -75,3 +75,5 @@ pub enum IbcAckResult {
     Ok(Binary),
     Error(String),
 }
+
+pub use astroport_governance;

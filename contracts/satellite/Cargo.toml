@@ -26,7 +26,8 @@ serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8"
 thiserror = { version = "1.0" }
 cw-utils = "0.13.2"
-astro-ibc = { path = "../../astro_ibc" }
+ibc-controller-package = { path = "../../packages/controller" }
+astro-satellite-package = { path = "../../packages/satellite" }
 itertools = "0.10.3"
 
 [dev-dependencies]

@@ -1,17 +1,15 @@
 [package]
-name = "astro-ibc"
+name = "astro-satellite-package"
 version = "0.1.0"
 authors = ["Astroport"]
 license = "Apache-2.0"
-description = "Common IBC astroport types"
+description = "Astroport satellite contract's types"
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8"
 astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git", branch = "assembly_ibc_support" }
-cosmwasm-std = { version = "1.0.0" }
+cosmwasm-std = "1.0.0"

@@ -7,8 +7,8 @@ use cosmwasm_std::{
     IbcReceiveResponse, ReplyOn, StdError, StdResult, SubMsg,
 };
 
-use astro_ibc::controller::IbcProposal;
-use astro_ibc::satellite::IbcAckResult;
+use astro_satellite_package::IbcAckResult;
+use ibc_controller_package::IbcProposal;
 use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
@@ -171,8 +171,8 @@ pub fn ibc_channel_close(
 mod tests {
     use super::*;
     use crate::contract::{execute, instantiate};
-    use astro_ibc::astroport_governance::assembly::ProposalMessage;
-    use astro_ibc::satellite::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
+    use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
+    use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
         MockQuerier, MockStorage,

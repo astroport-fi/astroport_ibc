@@ -1,4 +1,3 @@
-use astro_ibc::astroport_governance::assembly::ProposalStatus;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -6,13 +5,14 @@ use cosmwasm_std::{
     Response, StdError,
 };
 use cw2::set_contract_version;
+use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
-use astro_ibc::astroport_governance::astroport::asset::addr_validate_to_lower;
-use astro_ibc::astroport_governance::astroport::common::{
+use astro_satellite_package::QueryMsg;
+use ibc_controller_package::astroport_governance::astroport::asset::addr_validate_to_lower;
+use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use astro_ibc::controller::{ExecuteMsg, IbcProposal, InstantiateMsg};
-use astro_ibc::satellite::QueryMsg;
+use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
@@ -139,7 +139,7 @@ mod tests {
     use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128, Uint64};
 
     use crate::test_utils::{init_contract, mock_all, OWNER};
-    use astro_ibc::astroport_governance::assembly::ProposalMessage;
+    use ibc_controller_package::astroport_governance::assembly::ProposalMessage;
 
     use super::*;
 

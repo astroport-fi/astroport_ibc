@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "contracts/*",
-    "astro_ibc"
+    "packages/*"
 ]
 
 [profile.release]

@@ -1,0 +1,15 @@
+[package]
+name = "ibc-controller-package"
+version = "0.1.0"
+authors = ["Astroport"]
+license = "Apache-2.0"
+description = "Astroport ibc-controller contract's types"
+repository = "https://github.com/astroport-fi/astroport_ibc"
+homepage = "https://astroport.fi"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+schemars = "0.8"
+astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git", branch = "assembly_ibc_support" }
+cosmwasm-std = "1.0.0"

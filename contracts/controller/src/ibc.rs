@@ -1,5 +1,3 @@
-use astro_ibc::astroport_governance::assembly::ProposalStatus;
-use astro_ibc::controller::IbcProposal;
 use cosmwasm_std::{
     entry_point, from_binary, wasm_execute, Addr, DepsMut, Env, Ibc3ChannelOpenResponse,
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
@@ -7,7 +5,9 @@ use cosmwasm_std::{
     IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
-use astro_ibc::satellite::IbcAckResult;
+use astro_satellite_package::IbcAckResult;
+use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+use ibc_controller_package::IbcProposal;
 
 use crate::state::{CONFIG, PROPOSAL_STATE};
 
@@ -76,7 +76,7 @@ fn confirm_assembly(
 ) -> StdResult<SubMsg> {
     Ok(SubMsg::new(wasm_execute(
         assembly,
-        &astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+        &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
             proposal_id,
             status,
         },
@@ -171,14 +171,17 @@ pub fn ibc_channel_close(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::contract::execute;
-    use crate::test_utils::{init_contract, mock_all, OWNER};
-    use astro_ibc::controller::ExecuteMsg;
     use cosmwasm_std::testing::{
         mock_ibc_channel_close_init, mock_ibc_packet_ack, mock_ibc_packet_timeout,
     };
     use cosmwasm_std::{attr, to_binary, Binary, CosmosMsg, IbcAcknowledgement, WasmMsg};
+
+    use ibc_controller_package::ExecuteMsg;
+
+    use crate::contract::execute;
+    use crate::test_utils::{init_contract, mock_all, OWNER};
+
+    use super::*;
 
     fn mock_ibc_execute_proposal(channel_id: &str, proposal_id: u64) -> ExecuteMsg {
         ExecuteMsg::IbcExecuteProposal {
@@ -221,7 +224,7 @@ mod tests {
 
         assert_eq!(resp.messages.len(), 1);
         let valid_msg = to_binary(
-            &&astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+            &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
                 proposal_id,
                 status: ProposalStatus::Executed,
             },
@@ -261,7 +264,7 @@ mod tests {
 
         assert_eq!(resp.messages.len(), 1);
         let valid_msg = to_binary(
-            &&astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+            &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
                 proposal_id,
                 status: ProposalStatus::Failed,
             },
@@ -330,7 +333,7 @@ mod tests {
 
         assert_eq!(resp.messages.len(), 1);
         let valid_msg = to_binary(
-            &&astro_ibc::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+            &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
                 proposal_id,
                 status: ProposalStatus::Failed {},
             },
