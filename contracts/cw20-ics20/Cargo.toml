@@ -4,4 +4,4 @@ version = "0.13.4"
 edition = "2021"
 
 [dependencies]
-cw20-ics20-orig = { package = "cw20-ics20", version = "0.13.4" }
+cw20-ics20-orig = { package = "cw20-ics20", version = "0.15" }
