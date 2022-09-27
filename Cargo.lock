@@ -40,7 +40,7 @@ dependencies = [
 [[package]]
 name = "astroport"
 version = "2.0.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_core.git?branch=feat/migrate-to-cosmwasm-1.1#b8e1bacfbe19e40ce91e9758b74d4c252eef78ed"
+source = "git+https://github.com/astroport-fi/hidden_astroport_core.git?branch=feat/migrate-to-cosmwasm-1.1#eff2bcf450c1f7ec9acc13653fd7a6d2ede92d6d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -252,9 +252,9 @@ dependencies = [
 
 [[package]]
 name = "cw-controllers"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cc1bc794002a1e409e4a0c8aac8839f065fb387087d51b9efa94890b82c38e7"
+checksum = "09b3ababe9f0a473c2d878b7c973eee08e05e5d768253fbb08d475daeadba503"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -267,9 +267,9 @@ dependencies = [
 
 [[package]]
 name = "cw-multi-test"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2519fd64b6b8c7c4e77c317e665bd19b438db3e8e4867241fa6a31cf060feda9"
+checksum = "e8e81b4a7821d5eeba0d23f737c16027b39a600742ca8c32eb980895ffd270f4"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -286,9 +286,9 @@ dependencies = [
 
 [[package]]
 name = "cw-storage-plus"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39ba3fb5fad2dce94263d070848b2befc46b5c8e4929adfb9a3595267823d6ec"
+checksum = "dc6cf70ef7686e2da9ad7b067c5942cd3e88dd9453f7af42f54557f8af300fb0"
 dependencies = [
  "cosmwasm-std",
  "schemars",
@@ -297,9 +297,9 @@ dependencies = [
 
 [[package]]
 name = "cw-utils"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a67007ff056f4cd034f361c8ed69780c0180959b9c8037c84f3caa78120faf5"
+checksum = "0ae0b69fa7679de78825b4edeeec045066aa2b2c4b6e063d80042e565bb4da5c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -312,9 +312,9 @@ dependencies = [
 
 [[package]]
 name = "cw2"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0a1924a28607bf7cb9fd6681a64feea3e5fa9a8cb71fb4d24cf33635b21065a"
+checksum = "5abb8ecea72e09afff830252963cb60faf945ce6cef2c20a43814516082653da"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -325,9 +325,9 @@ dependencies = [
 
 [[package]]
 name = "cw20"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56a48e4a85c0a31484e053a3eea15abfc3ed24fafc1a1a3e91181a0bd3a8ee91"
+checksum = "f6025276fb6e603e974c21f3e4606982cdc646080e8fba3198816605505e1d9a"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -340,14 +340,14 @@ dependencies = [
 name = "cw20-ics20"
 version = "0.13.4"
 dependencies = [
- "cw20-ics20 0.15.0",
+ "cw20-ics20 0.15.1",
 ]
 
 [[package]]
 name = "cw20-ics20"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddcbed87549947e17bcd1c30302a302198ab31f9596cb2f5bdaa2b476f733d71"
+checksum = "7dcb28f4c031d62b63bbb9552c50723565e56659a5abda0433b2d3844400137b"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
