@@ -55,7 +55,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.1.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/migrate-to-cosmwasm-1.1#0a207d1616cc1c7c06f49f201c362d79b4e358ae"
+source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/migrate-to-cosmwasm-1.1#4cd1aa1a32cecfc1a081c3e7044a9e35b26bb823"
 dependencies = [
  "astroport",
  "cosmwasm-std",
