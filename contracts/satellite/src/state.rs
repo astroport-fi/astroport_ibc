@@ -1,12 +1,11 @@
 use cosmwasm_std::{Addr, Env};
 use cw_storage_plus::{Item, Map};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
 use astro_satellite_package::UpdateConfigMsg;
+use cosmwasm_schema::cw_serde;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct Config {
     /// Address which is able to update contracts' parameters
     pub owner: Addr,
@@ -53,7 +52,7 @@ impl Config {
 }
 
 /// Structure to point to exact transaction in history.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct TxInfo {
     pub height: u64,
     pub tx_index: u32,

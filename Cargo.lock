@@ -32,6 +32,7 @@ name = "astro-satellite-package"
 version = "0.1.0"
 dependencies = [
  "astroport-governance",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "schemars",
  "serde",
@@ -558,6 +559,7 @@ name = "ibc-controller-package"
 version = "0.1.0"
 dependencies = [
  "astroport-governance",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "schemars",
  "serde",

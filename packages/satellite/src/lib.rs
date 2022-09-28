@@ -1,10 +1,8 @@
-use astroport_governance::assembly::ProposalMessage;
+use astroport_governance::assembly::{ProposalMessage, ProposalStatus};
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Binary;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct InstantiateMsg {
     /// Address which is able to update contracts' parameters
     pub owner: String,
@@ -20,8 +18,7 @@ pub struct InstantiateMsg {
     pub timeout: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct UpdateConfigMsg {
     pub astro_denom: Option<String>,
     pub gov_channel: Option<String>,
@@ -31,8 +28,7 @@ pub struct UpdateConfigMsg {
     pub timeout: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     TransferAstro {},
     UpdateConfig(UpdateConfigMsg),
@@ -57,20 +53,20 @@ pub enum ExecuteMsg {
     ClaimOwnership {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(ProposalStatus)]
     ProposalState { id: u64 },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum MigrateMsg {}
 
 /// This is a generic ICS acknowledgement format.
 /// Proto defined here: https://github.com/cosmos/cosmos-sdk/blob/v0.42.0/proto/ibc/core/channel/v1/channel.proto#L141-L147
 /// This is compatible with the JSON serialization
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, JsonSchema)]
+#[cw_serde]
 pub enum IbcAckResult {
     Ok(Binary),
     Error(String),
