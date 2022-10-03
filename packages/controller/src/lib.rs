@@ -1,5 +1,5 @@
-use astroport_governance::assembly::ProposalMessage;
-use cosmwasm_schema::cw_serde;
+use astroport_governance::assembly::{ProposalMessage, ProposalStatus};
+use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -46,6 +46,7 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(ProposalStatus)]
     ProposalState { id: u64 },
 }
 
