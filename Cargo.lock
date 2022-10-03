@@ -53,6 +53,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.1.0"
+source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/assembly_ibc_support#b1afa4eecf3fbb24f1cfb130bdfa43798a68179e"
 dependencies = [
  "astroport",
  "cosmwasm-std",
