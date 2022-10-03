@@ -35,7 +35,7 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, msg.owner)?,
+            owner: addr_validate_to_lower(deps.api, &msg.owner)?,
             astro_denom: msg.astro_denom,
             main_controller_port: format!("wasm.{}", msg.main_controller),
             main_maker: msg.main_maker,
