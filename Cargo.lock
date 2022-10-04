@@ -332,9 +332,9 @@ dependencies = [
 
 [[package]]
 name = "cw20-ics20"
-version = "0.13.4"
+version = "0.15.1"
 dependencies = [
- "cw20-ics20 0.15.1",
+ "cw20-ics20 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

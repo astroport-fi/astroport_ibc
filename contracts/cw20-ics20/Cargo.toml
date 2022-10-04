@@ -1,6 +1,6 @@
 [package]
 name = "cw20-ics20"
-version = "0.13.4"
+version = "0.15.1"
 edition = "2021"
 
 [dependencies]

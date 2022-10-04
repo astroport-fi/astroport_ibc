@@ -26,7 +26,7 @@ thiserror = { version = "1.0" }
 cw-utils = "0.15"
 ibc-controller-package = { path = "../../packages/controller" }
 astro-satellite-package = { path = "../../packages/satellite" }
-itertools = "0.10.3"
+itertools = "0.10"
 cosmwasm-schema = "1.1"
 
 [dev-dependencies]
