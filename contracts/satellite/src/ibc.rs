@@ -171,13 +171,13 @@ pub fn ibc_channel_close(
 mod tests {
     use super::*;
     use crate::contract::{execute, instantiate};
-    use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
     use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
         MockQuerier, MockStorage,
     };
     use cosmwasm_std::{CosmosMsg, Empty, MessageInfo, OwnedDeps};
+    use ibc_controller_package::astroport_governance::assembly::ProposalMessage;
 
     pub const OWNER: &str = "owner";
     pub const CONTROLLER: &str = "controller";

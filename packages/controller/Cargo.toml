@@ -11,5 +11,5 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8"
-astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git" }
+astroport-governance = { git = "ssh://git@github.com/astroport-fi/hidden_astroport_governance.git" }
 cosmwasm-std = "1.0.0"
