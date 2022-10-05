@@ -1,13 +1,11 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
+use cosmwasm_schema::cw_serde;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 use ibc_controller_package::astroport_governance::astroport::common::OwnershipProposal;
-use ibc_controller_package::astroport_governance::U64Key;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct Config {
     /// Address that's allowed to change contract parameters
     pub owner: Addr,
@@ -19,7 +17,7 @@ pub struct Config {
 
 pub const CONFIG: Item<Config> = Item::new("config");
 
-pub const PROPOSAL_STATE: Map<U64Key, ProposalStatus> = Map::new("proposal_state");
+pub const PROPOSAL_STATE: Map<u64, ProposalStatus> = Map::new("proposal_state");
 
 /// Contains a proposal to change contract ownership.
 pub const OWNERSHIP_PROPOSAL: Item<OwnershipProposal> = Item::new("ownership_proposal");

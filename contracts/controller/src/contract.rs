@@ -64,11 +64,7 @@ pub fn execute(
                 })?,
                 timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
             });
-            PROPOSAL_STATE.save(
-                deps.storage,
-                proposal_id.into(),
-                &ProposalStatus::InProgress {},
-            )?;
+            PROPOSAL_STATE.save(deps.storage, proposal_id, &ProposalStatus::InProgress {})?;
 
             Ok(Response::new()
                 .add_message(ibc_msg)
@@ -123,7 +119,7 @@ pub fn execute(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     match msg {
         QueryMsg::ProposalState { id } => {
-            let state = PROPOSAL_STATE.load(deps.storage, id.into())?;
+            let state = PROPOSAL_STATE.load(deps.storage, id)?;
             Ok(to_binary(&state)?)
         }
     }

@@ -50,7 +50,7 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, ContractError> {
-    let proposal_id = REPLY_DATA.load(deps.storage)?.into();
+    let proposal_id = REPLY_DATA.load(deps.storage)?;
     match reply.id {
         RECEIVE_ID => {
             RESULTS.save(deps.storage, proposal_id, &env.into())?;
@@ -152,7 +152,7 @@ fn check_messages(env: Env, messages: Vec<ProposalMessage>) -> Result<Response, 
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     match msg {
         QueryMsg::ProposalState { id } => {
-            let state = RESULTS.load(deps.storage, id.into())?;
+            let state = RESULTS.load(deps.storage, id)?;
             Ok(to_binary(&state)?)
         }
     }

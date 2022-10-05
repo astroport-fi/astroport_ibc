@@ -91,23 +91,22 @@ pub fn ibc_packet_timeout(
     msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
     let ibc_proposal: IbcProposal = from_binary(&msg.packet.data)?;
-    let new_status =
-        PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
-            None => Err(StdError::generic_err(format!(
-                "Proposal {} was not executed via controller",
-                ibc_proposal.id
-            ))),
-            Some(state) => {
-                if state == (ProposalStatus::InProgress {}) {
-                    Ok(ProposalStatus::Failed {})
-                } else {
-                    Err(StdError::generic_err(format!(
-                        "Proposal id: {} state is already {}",
-                        ibc_proposal.id, state
-                    )))
-                }
+    let new_status = PROPOSAL_STATE.update(deps.storage, ibc_proposal.id, |state| match state {
+        None => Err(StdError::generic_err(format!(
+            "Proposal {} was not executed via controller",
+            ibc_proposal.id
+        ))),
+        Some(state) => {
+            if state == (ProposalStatus::InProgress {}) {
+                Ok(ProposalStatus::Failed {})
+            } else {
+                Err(StdError::generic_err(format!(
+                    "Proposal id: {} state is already {}",
+                    ibc_proposal.id, state
+                )))
             }
-        })?;
+        }
+    })?;
     let config = CONFIG.load(deps.storage)?;
 
     Ok(IbcBasicResponse::new()
@@ -128,26 +127,25 @@ pub fn ibc_packet_ack(
 ) -> StdResult<IbcBasicResponse> {
     let ibc_ack: IbcAckResult = from_binary(&msg.acknowledgement.data)?;
     let ibc_proposal: IbcProposal = from_binary(&msg.original_packet.data)?;
-    let new_status =
-        PROPOSAL_STATE.update(deps.storage, ibc_proposal.id.into(), |state| match state {
-            None => Err(StdError::generic_err(format!(
-                "Proposal {} was not executed via controller",
-                ibc_proposal.id
-            ))),
-            Some(state) => {
-                if state == (ProposalStatus::InProgress {}) {
-                    match ibc_ack {
-                        IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
-                        IbcAckResult::Error(_) => Ok(ProposalStatus::Failed {}),
-                    }
-                } else {
-                    Err(StdError::generic_err(format!(
-                        "Proposal id: {} state is already {}",
-                        ibc_proposal.id, state
-                    )))
+    let new_status = PROPOSAL_STATE.update(deps.storage, ibc_proposal.id, |state| match state {
+        None => Err(StdError::generic_err(format!(
+            "Proposal {} was not executed via controller",
+            ibc_proposal.id
+        ))),
+        Some(state) => {
+            if state == (ProposalStatus::InProgress {}) {
+                match ibc_ack {
+                    IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
+                    IbcAckResult::Error(_) => Ok(ProposalStatus::Failed {}),
                 }
+            } else {
+                Err(StdError::generic_err(format!(
+                    "Proposal id: {} state is already {}",
+                    ibc_proposal.id, state
+                )))
             }
-        })?;
+        }
+    })?;
     let config = CONFIG.load(deps.storage)?;
 
     Ok(IbcBasicResponse::new()
