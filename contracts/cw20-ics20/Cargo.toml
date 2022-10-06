@@ -1,10 +1,10 @@
 [package]
 name = "cw20-ics20"
-version = "0.13.4"
+version = "0.15.1"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cw20-ics20-orig = { package = "cw20-ics20", version = "0.13.4" }
+cw20-ics20-orig = { package = "cw20-ics20", version = "0.15.1" }
