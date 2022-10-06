@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.1.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/migrate-release-terra2-to-cosmwasm1.1#cfcc84a96fc5f97d42078618fb85d1aa30be4e09"
+source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=release/terra2#d9344be804f6ef31729b0054a6ec556ec033382a"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
@@ -551,6 +551,8 @@ dependencies = [
  "astroport-governance",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "schemars",
+ "serde",
 ]
 
 [[package]]

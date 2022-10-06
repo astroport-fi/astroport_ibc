@@ -13,3 +13,4 @@ serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8"
 astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git", branch = "release/terra2" }
 cosmwasm-std = "1.0.0"
+cosmwasm-schema = "1.1"
