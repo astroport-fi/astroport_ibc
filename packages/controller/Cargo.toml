@@ -9,6 +9,8 @@ homepage = "https://astroport.fi"
 edition = "2021"
 
 [dependencies]
-astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git", branch = "feat/migrate-release-terra2-to-cosmwasm1.1" }
-cosmwasm-std = "1.1"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+schemars = "0.8"
+astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git", branch = "release/terra2" }
+cosmwasm-std = "1.0.0"
 cosmwasm-schema = "1.1"
