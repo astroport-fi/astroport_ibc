@@ -8,3 +8,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cw20-ics20-orig = { package = "cw20-ics20", version = "0.15" }
+
+[dev-dependencies]
+cosmwasm-schema = "1.1"
