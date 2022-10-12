@@ -15,3 +15,6 @@
 .idea
 
 /artifacts/
+
+/scripts/node_modules
+scripts/.env

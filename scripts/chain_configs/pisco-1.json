@@ -1,0 +1,28 @@
+{
+  "generalInfo": {
+    "multisig": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j"
+  },
+  "cw20_ics20": {
+    "admin": null,
+    "initMsg": {
+      "default_timeout": 360,
+      "gov_contract": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j",
+      "allowlist": [
+        {
+          "contract": "terra167dsqkh2alurx997wmycw9ydkyu54gyswe3ygmrs4lwume3vmwks8ruqnv"
+        }
+      ],
+      "default_gas_limit": null
+    },
+    "label": "Astroport CW20-ICS20"
+  },
+  "controller": {
+    "admin": null,
+    "initMsg": {
+      "owner": null,
+      "assembly": null,
+      "timeout": 360
+    },
+    "label": "Astroport Controller"
+  }
+}
