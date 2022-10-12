@@ -18,19 +18,6 @@ interface CW20_ICS20 {
     label: string
 }
 
-interface IBCSatellite {
-    admin: string,
-    initMsg: {
-        owner: string,
-        astro_denom: string,
-        transfer_channel: string,
-        main_controller: string,
-        main_maker: string,
-        timeout: number
-    },
-    label: string
-}
-
 interface IBCController {
     admin: string,
     initMsg: {
@@ -44,6 +31,5 @@ interface IBCController {
 interface Config {
     cw20_ics20: CW20_ICS20,
     controller: IBCController,
-    satellite: IBCSatellite,
     generalInfo: GeneralInfo
 }

@@ -21,7 +21,6 @@ async function main() {
 
     await uploadAndInitICS20(terra, wallet)
     await uploadAndInitController(terra, wallet)
-    await uploadAndInitSatellite(terra, wallet)
     console.log('FINISH')
 }
 
@@ -78,31 +77,6 @@ async function uploadAndInitController(terra: LCDClient, wallet: any) {
         // @ts-ignore
         network.ibcControllerAddress = resp.shift().shift()
         console.log(`IBC Controller Contract Address: ${network.ibcControllerAddress}`)
-        writeArtifact(network, terra.config.chainID)
-    }
-}
-
-async function uploadAndInitSatellite(terra: LCDClient, wallet: any) {
-    let network = readArtifact(terra.config.chainID)
-
-    if (!network.satelliteAddress) {
-        console.log('Deploying IBC-Satellite...')
-
-        chainConfigs.satellite.initMsg.owner ||= chainConfigs.generalInfo.multisig;
-        chainConfigs.satellite.admin ||= chainConfigs.generalInfo.multisig;
-
-        let resp = await deployContract(
-            terra,
-            wallet,
-            chainConfigs.satellite.admin,
-            join(ARTIFACTS_PATH, 'astro_satellite.wasm'),
-            chainConfigs.satellite.initMsg,
-            chainConfigs.satellite.label
-        )
-
-        // @ts-ignore
-        network.satelliteAddress = resp.shift().shift()
-        console.log(`IBC-Satellite Address Contract: ${network.satelliteAddress}`)
         writeArtifact(network, terra.config.chainID)
     }
 }
