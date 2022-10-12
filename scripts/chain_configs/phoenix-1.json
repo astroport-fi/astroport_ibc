@@ -1,6 +1,6 @@
 {
   "generalInfo": {
-    "multisig": "terra17lmam6zguazs5q5u6z5mmx76uj63gldnse2pdp"
+    "multisig": "terra174gu7kg8ekk5gsxdma5jlfcedm653tyg6ayppw"
   },
   "cw20_ics20": {
     "admin": null,
@@ -24,17 +24,5 @@
       "timeout": 360
     },
     "label": "Astroport Controller"
-  },
-  "satellite": {
-    "admin": null,
-    "initMsg": {
-      "owner": null,
-      "astro_denom": "terra167dsqkh2alurx997wmycw9ydkyu54gyswe3ygmrs4lwume3vmwks8ruqnv",
-      "transfer_channel": "test address",
-      "main_controller": "terra183c5yr3xxhz3sq6np9chw94c4ncsvm6ewc09lc4g8ma4sqgg3ycqahm4zt",
-      "main_maker": "terra146ffs60x8seza3cq9a447mhw0zqeylkj37ye4uj7rl2uwhvgq89sts2ess",
-      "timeout": 360
-    },
-    "label": "Astroport Satellite"
   }
 }
