@@ -47,15 +47,17 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    if config.owner != info.sender {
-        return Err(ContractError::Unauthorized {});
-    }
+
     match msg {
         ExecuteMsg::IbcExecuteProposal {
             channel_id,
             proposal_id,
             messages,
         } => {
+            if config.owner != info.sender {
+                return Err(ContractError::Unauthorized {});
+            }
+
             let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id: channel_id.clone(),
                 data: to_binary(&IbcProposal {
@@ -81,23 +83,17 @@ pub fn execute(
                 }
             })
             .map(|_| Response::new().add_attribute("action", "update_config")),
-        ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
-            let config = CONFIG.load(deps.storage)?;
-
-            propose_new_owner(
-                deps,
-                info,
-                env,
-                owner,
-                expires_in,
-                config.owner,
-                OWNERSHIP_PROPOSAL,
-            )
-            .map_err(Into::into)
-        }
+        ExecuteMsg::ProposeNewOwner { owner, expires_in } => propose_new_owner(
+            deps,
+            info,
+            env,
+            owner,
+            expires_in,
+            config.owner,
+            OWNERSHIP_PROPOSAL,
+        )
+        .map_err(Into::into),
         ExecuteMsg::DropOwnershipProposal {} => {
-            let config = CONFIG.load(deps.storage)?;
-
             drop_ownership_proposal(deps, info, config.owner, OWNERSHIP_PROPOSAL)
                 .map_err(Into::into)
         }
