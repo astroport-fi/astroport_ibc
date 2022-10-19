@@ -50,7 +50,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.1.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/migrate-to-cosmwasm-1.1#eb8b913aa6b34b0bd5d1e06493625ad64d9c51cf"
+source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git#62fb499897138ff66be55ad97c968632c6860f1d"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
@@ -334,6 +334,7 @@ dependencies = [
 name = "cw20-ics20"
 version = "0.15.1"
 dependencies = [
+ "cosmwasm-schema",
  "cw20-ics20 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
