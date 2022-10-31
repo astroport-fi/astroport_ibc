@@ -61,7 +61,7 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub enum MigrateMsg {}
+pub struct MigrateMsg {}
 
 /// This is a generic ICS acknowledgement format.
 /// Proto defined here: https://github.com/cosmos/cosmos-sdk/blob/v0.42.0/proto/ibc/core/channel/v1/channel.proto#L141-L147
