@@ -9,7 +9,7 @@ use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 use ibc_controller_package::IbcProposal;
 
-use crate::state::{CONFIG, PROPOSAL_STATE};
+use crate::state::{CONFIG, LAST_ERROR, PROPOSAL_STATE};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -97,7 +97,7 @@ pub fn ibc_packet_timeout(
             ibc_proposal.id
         ))),
         Some(state) => {
-            if state == (ProposalStatus::InProgress {}) {
+            if state == ProposalStatus::InProgress {
                 Ok(ProposalStatus::Failed {})
             } else {
                 Err(StdError::generic_err(format!(
@@ -127,16 +127,20 @@ pub fn ibc_packet_ack(
 ) -> StdResult<IbcBasicResponse> {
     let ibc_ack: IbcAckResult = from_binary(&msg.acknowledgement.data)?;
     let ibc_proposal: IbcProposal = from_binary(&msg.original_packet.data)?;
+    let mut err_msg = "".to_string();
     let new_status = PROPOSAL_STATE.update(deps.storage, ibc_proposal.id, |state| match state {
         None => Err(StdError::generic_err(format!(
             "Proposal {} was not executed via controller",
             ibc_proposal.id
         ))),
         Some(state) => {
-            if state == (ProposalStatus::InProgress {}) {
+            if state == ProposalStatus::InProgress {
                 match ibc_ack {
                     IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
-                    IbcAckResult::Error(_) => Ok(ProposalStatus::Failed {}),
+                    IbcAckResult::Error(err) => {
+                        err_msg = err;
+                        Ok(ProposalStatus::Failed {})
+                    }
                 }
             } else {
                 Err(StdError::generic_err(format!(
@@ -146,6 +150,7 @@ pub fn ibc_packet_ack(
             }
         }
     })?;
+    LAST_ERROR.save(deps.storage, &err_msg)?;
     let config = CONFIG.load(deps.storage)?;
 
     Ok(IbcBasicResponse::new()
@@ -218,7 +223,7 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, ProposalStatus::Executed {});
+        assert_eq!(state, ProposalStatus::Executed);
 
         assert_eq!(resp.messages.len(), 1);
         let valid_msg = to_binary(
@@ -258,7 +263,7 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, ProposalStatus::Failed {});
+        assert_eq!(state, ProposalStatus::Failed);
 
         assert_eq!(resp.messages.len(), 1);
         let valid_msg = to_binary(
@@ -280,7 +285,7 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, (proposal_id - 1).into())
             .unwrap();
-        assert_eq!(state, ProposalStatus::Executed {});
+        assert_eq!(state, ProposalStatus::Executed);
 
         // Proposal with unknown id
         let ack_msg = mock_ibc_packet_ack(
@@ -327,13 +332,13 @@ mod tests {
         let state = PROPOSAL_STATE
             .load(deps.as_ref().storage, proposal_id.into())
             .unwrap();
-        assert_eq!(state, ProposalStatus::Failed {});
+        assert_eq!(state, ProposalStatus::Failed);
 
         assert_eq!(resp.messages.len(), 1);
         let valid_msg = to_binary(
             &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
                 proposal_id,
-                status: ProposalStatus::Failed {},
+                status: ProposalStatus::Failed,
             },
         )
         .unwrap();
@@ -352,7 +357,7 @@ mod tests {
             StdError::generic_err(format!(
                 "Proposal id: {} state is already {}",
                 proposal_id,
-                ProposalStatus::Failed {}
+                ProposalStatus::Failed
             ))
         );
 
