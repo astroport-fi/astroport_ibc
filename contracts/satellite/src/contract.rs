@@ -53,7 +53,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     let proposal_id = REPLY_DATA.load(deps.storage)?;
     match reply.id {
         RECEIVE_ID => {
-            RESULTS.save(deps.storage, proposal_id, &env.into())?;
+            RESULTS.save(deps.storage, proposal_id, &env.block.height)?;
             Ok(Response::new())
         }
         _ => Err(ContractError::InvalidReplyId {}),
