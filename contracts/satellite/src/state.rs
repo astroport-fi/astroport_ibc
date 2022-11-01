@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Env};
+use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
 use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
@@ -51,27 +51,11 @@ impl Config {
     }
 }
 
-/// Structure to point to exact transaction in history.
-#[cw_serde]
-pub struct TxInfo {
-    pub height: u64,
-    pub tx_index: u32,
-}
-
-impl From<Env> for TxInfo {
-    fn from(env: Env) -> Self {
-        Self {
-            height: env.block.height,
-            tx_index: env.transaction.unwrap().index,
-        }
-    }
-}
-
 pub const CONFIG: Item<Config> = Item::new("config");
 
-/// Stores map SequenceId -> Transaction info for successful proposals.
+/// Stores map proposal id -> transaction height for successful proposals.
 /// Can be considered as a flag to check that proposal was executed.
-pub const RESULTS: Map<u64, TxInfo> = Map::new("results");
+pub const RESULTS: Map<u64, u64> = Map::new("results");
 
 /// Stores data for reply endpoint.
 pub const REPLY_DATA: Item<u64> = Item::new("reply_data");

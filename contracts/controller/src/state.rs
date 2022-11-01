@@ -19,5 +19,7 @@ pub const CONFIG: Item<Config> = Item::new("config");
 
 pub const PROPOSAL_STATE: Map<u64, ProposalStatus> = Map::new("proposal_state");
 
+pub const LAST_ERROR: Item<String> = Item::new("last_error");
+
 /// Contains a proposal to change contract ownership.
 pub const OWNERSHIP_PROPOSAL: Item<OwnershipProposal> = Item::new("ownership_proposal");
