@@ -25,6 +25,7 @@ pub struct UpdateConfigMsg {
     pub main_controller_port: Option<String>,
     pub main_maker: Option<String>,
     pub transfer_channel: Option<String>,
+    pub accept_new_connections: Option<bool>,
     pub timeout: Option<u64>,
 }
 
