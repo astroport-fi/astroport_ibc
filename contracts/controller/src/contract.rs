@@ -1,18 +1,17 @@
+use ap_ibc_controller::astroport_governance::assembly::ProposalStatus;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Response, StdError,
+    to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Response,
+    StdError,
 };
-use cw2::set_contract_version;
-use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+use cw2::{get_contract_version, set_contract_version, ContractVersion};
 
-use astro_satellite_package::QueryMsg;
-use ibc_controller_package::astroport_governance::astroport::asset::addr_validate_to_lower;
-use ibc_controller_package::astroport_governance::astroport::common::{
+use ap_ibc_controller::astroport_governance::astroport::asset::addr_validate_to_lower;
+use ap_ibc_controller::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
+use ap_ibc_controller::{ExecuteMsg, IbcProposal, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
@@ -121,9 +120,33 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
     }
 }
 
+/// Manages contract migration.
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let ContractVersion {
+        contract: contract_name,
+        version,
+    } = get_contract_version(deps.storage)?;
+
+    match contract_name.as_ref() {
+        "ibc-controller" => match version.as_ref() {
+            "0.1.0" => {}
+            _ => return Err(ContractError::MigrationError {}),
+        },
+        "astroport-ibc-controller" => {
+            // Future migrations are added here
+            return Err(ContractError::MigrationError {});
+        }
+        _ => return Err(ContractError::MigrationError {}),
+    };
+
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    Ok(Response::new()
+        .add_attribute("previous_contract_name", contract_name)
+        .add_attribute("previous_contract_version", version)
+        .add_attribute("new_contract_name", CONTRACT_NAME)
+        .add_attribute("new_contract_version", CONTRACT_VERSION))
 }
 
 #[cfg(test)]
@@ -131,7 +154,7 @@ mod tests {
     use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128, Uint64};
 
     use crate::test_utils::{init_contract, mock_all, OWNER};
-    use ibc_controller_package::astroport_governance::assembly::ProposalMessage;
+    use ap_ibc_controller::astroport_governance::assembly::ProposalMessage;
 
     use super::*;
 

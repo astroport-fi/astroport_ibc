@@ -1,8 +1,8 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
-use astro_satellite_package::UpdateConfigMsg;
+use ap_ibc_satellite::astroport_governance::astroport::common::OwnershipProposal;
+use ap_ibc_satellite::UpdateConfigMsg;
 use cosmwasm_schema::cw_serde;
 
 #[cw_serde]

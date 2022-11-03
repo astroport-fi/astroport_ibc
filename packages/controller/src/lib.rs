@@ -50,4 +50,7 @@ pub enum QueryMsg {
     ProposalState { id: u64 },
 }
 
+#[cw_serde]
+pub struct MigrateMsg {}
+
 pub use astroport_governance;

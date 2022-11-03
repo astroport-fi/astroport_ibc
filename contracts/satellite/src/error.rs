@@ -34,4 +34,7 @@ pub enum ContractError {
 
     #[error("Messages check passed. Nothing was committed to the blockchain")]
     MessagesCheckPassed {},
+
+    #[error("Contract can't be migrated!")]
+    MigrationError {},
 }

@@ -9,25 +9,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602"
 
 [[package]]
-name = "astro-satellite"
-version = "0.1.0"
+name = "ap-ibc-controller"
+version = "0.1.1"
 dependencies = [
- "astro-satellite-package",
+ "astroport-governance",
  "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "ibc-controller-package",
- "itertools",
- "thiserror",
 ]
 
 [[package]]
-name = "astro-satellite-package"
-version = "0.1.0"
+name = "ap-ibc-satellite"
+version = "0.1.1"
 dependencies = [
  "astroport-governance",
  "cosmwasm-schema",
@@ -48,6 +39,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "astroport-cw20-ics20"
+version = "0.15.2"
+dependencies = [
+ "cosmwasm-schema",
+ "cw20-ics20",
+]
+
+[[package]]
 name = "astroport-governance"
 version = "1.1.0"
 source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git#62fb499897138ff66be55ad97c968632c6860f1d"
@@ -57,6 +56,35 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw20",
+]
+
+[[package]]
+name = "astroport-ibc-controller"
+version = "0.1.1"
+dependencies = [
+ "ap-ibc-controller",
+ "ap-ibc-satellite",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "thiserror",
+]
+
+[[package]]
+name = "astroport-ibc-satellite"
+version = "0.1.1"
+dependencies = [
+ "ap-ibc-controller",
+ "ap-ibc-satellite",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "itertools",
+ "thiserror",
 ]
 
 [[package]]
@@ -333,14 +361,6 @@ dependencies = [
 [[package]]
 name = "cw20-ics20"
 version = "0.15.1"
-dependencies = [
- "cosmwasm-schema",
- "cw20-ics20 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "cw20-ics20"
-version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dcb28f4c031d62b63bbb9552c50723565e56659a5abda0433b2d3844400137b"
 dependencies = [
@@ -529,30 +549,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
  "digest 0.10.5",
-]
-
-[[package]]
-name = "ibc-controller"
-version = "0.1.0"
-dependencies = [
- "astro-satellite-package",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw2",
- "ibc-controller-package",
- "thiserror",
-]
-
-[[package]]
-name = "ibc-controller-package"
-version = "0.1.0"
-dependencies = [
- "astroport-governance",
- "cosmwasm-schema",
- "cosmwasm-std",
 ]
 
 [[package]]

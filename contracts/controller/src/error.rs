@@ -8,4 +8,7 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("Contract can't be migrated!")]
+    MigrationError {},
 }

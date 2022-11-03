@@ -1,7 +1,8 @@
-use astro_satellite::contract::{execute, instantiate, query, reply};
-use astro_satellite::error::ContractError;
-use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
-use astro_satellite_package::{ExecuteMsg, InstantiateMsg};
+// from here
+use ap_ibc_satellite::astroport_governance::assembly::ProposalMessage;
+use ap_ibc_satellite::{ExecuteMsg, InstantiateMsg};
+use astroport_ibc_satellite::contract::{execute, instantiate, query, reply};
+use astroport_ibc_satellite::error::ContractError;
 use cosmwasm_std::{
     wasm_execute, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response,
     StdResult,

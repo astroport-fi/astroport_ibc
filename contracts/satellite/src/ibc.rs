@@ -1,14 +1,16 @@
 use std::fmt::Display;
 
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse,
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, ReplyOn, StdError, StdResult, SubMsg,
+    from_binary, to_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, ReplyOn,
+    StdError, StdResult, SubMsg,
 };
 
-use astro_satellite_package::IbcAckResult;
-use ibc_controller_package::IbcProposal;
+use ap_ibc_controller::IbcProposal;
+use ap_ibc_satellite::IbcAckResult;
 use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
@@ -171,8 +173,8 @@ pub fn ibc_channel_close(
 mod tests {
     use super::*;
     use crate::contract::{execute, instantiate};
-    use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
-    use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
+    use ap_ibc_satellite::astroport_governance::assembly::ProposalMessage;
+    use ap_ibc_satellite::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
         MockQuerier, MockStorage,

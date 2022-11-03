@@ -64,7 +64,7 @@ pub enum QueryMsg {
 pub struct MigrateMsg {}
 
 /// This is a generic ICS acknowledgement format.
-/// Proto defined here: https://github.com/cosmos/cosmos-sdk/blob/v0.42.0/proto/ibc/core/channel/v1/channel.proto#L141-L147
+/// Proto defined [here](https://github.com/cosmos/cosmos-sdk/blob/v0.42.0/proto/ibc/core/channel/v1/channel.proto#L141-L147)
 /// This is compatible with the JSON serialization
 #[cw_serde]
 pub enum IbcAckResult {

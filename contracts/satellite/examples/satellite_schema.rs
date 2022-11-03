@@ -1,4 +1,4 @@
-use astro_satellite_package::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use ap_ibc_satellite::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use cosmwasm_schema::write_api;
 
 fn main() {
@@ -6,5 +6,6 @@ fn main() {
         instantiate: InstantiateMsg,
         query: QueryMsg,
         execute: ExecuteMsg,
+        migrate: MigrateMsg,
     }
 }
