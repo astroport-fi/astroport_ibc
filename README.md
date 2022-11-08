@@ -14,22 +14,7 @@ This repo contains Astroport IBC related contracts.
 
 You will need Rust 1.64.0+ with wasm32-unknown-unknown target installed.
 
-You can run unit tests for each contract directory via:
-
-```
-cargo test
-```
-
-#### For a production-ready (compressed) build:
-Run the following from the repository root
-
-```
-./scripts/build_release.sh
-```
-
-The optimized contracts are generated in the artifacts/ directory.
-
-#### You can compile each contract:
+### You can compile each contract:
 Go to contract directory and run 
     
 ```
@@ -38,6 +23,22 @@ cp ../../target/wasm32-unknown-unknown/release/astroport_token.wasm .
 ls -l astroport_token.wasm
 sha256sum astroport_token.wasm
 ```
+
+### You can run tests for all contracts
+Run the following from the repository root
+
+```
+cargo test
+```
+
+### For a production-ready (compressed) build:
+Run the following from the repository root
+
+```
+./scripts/build_release.sh
+```
+
+The optimized contracts are generated in the artifacts/ directory.
 
 ## Branches
 
