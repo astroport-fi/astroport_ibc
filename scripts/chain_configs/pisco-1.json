@@ -1,12 +1,12 @@
 {
   "generalInfo": {
-    "multisig": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j"
+    "multisig": "terra174gu7kg8ekk5gsxdma5jlfcedm653tyg6ayppw"
   },
   "cw20_ics20": {
     "admin": null,
     "initMsg": {
       "default_timeout": 360,
-      "gov_contract": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j",
+      "gov_contract": null,
       "allowlist": [
         {
           "contract": "terra167dsqkh2alurx997wmycw9ydkyu54gyswe3ygmrs4lwume3vmwks8ruqnv"
@@ -20,7 +20,7 @@
     "admin": null,
     "initMsg": {
       "owner": null,
-      "assembly": null,
+      "assembly": "terra195m6n5xq4rkjy47fn5y3s08tfmj3ryknj55jqvgq2y55zul9myzsgy06hk",
       "timeout": 360
     },
     "label": "Astroport Controller"
