@@ -7,7 +7,7 @@ This repo contains Astroport IBC related contracts.
 | Name                           | Description                      |
 | ------------------------------ | -------------------------------- |
 | [`controller`](contracts/controller) | IBC controller contract intended to be hosted on the main chain |
-| [`cw20-ics20`](contracts/cw20-ics20) | IBC Enabled contracts that receives CW20 tokens and sends them over ICS20 to a remote chain |
+| [`cw20-ics20`](contracts/cw20-ics20) | IBC Enabled contract that receives CW20 tokens and sends them over IBC channel to a remote chain |
 | [`satellite`](contracts/satellite) | IBC enabled astroport satellite contract intended to be hosted on a remote chain |
 
 ## Building Contracts
