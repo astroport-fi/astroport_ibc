@@ -1,5 +1,5 @@
 [package]
-name = "cw20-ics20"
+name = "astroport-cw20-ics20"
 version = "0.15.1"
 edition = "2021"
 
