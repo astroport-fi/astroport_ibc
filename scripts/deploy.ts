@@ -6,8 +6,8 @@ import {
     deployContract,
 } from './helpers.js'
 import { join } from 'path'
-import {LCDClient} from '@terra-money/terra.js';
-import {chainConfigs} from "./types.d/chain_configs.js";
+import { LCDClient } from '@terra-money/terra.js';
+import { chainConfigs } from "./types.d/chain_configs.js";
 
 const ARTIFACTS_PATH = '../artifacts'
 
@@ -21,26 +21,21 @@ async function main() {
 
     await uploadAndInitICS20(terra, wallet)
     await uploadAndInitController(terra, wallet)
-    console.log('FINISH')
 }
 
 async function uploadAndInitICS20(terra: LCDClient, wallet: any) {
     let network = readArtifact(terra.config.chainID)
 
-    if (!network.governanceAddress) {
-        throw new Error("Please deploy the Governance contract")
-    }
-
-    if (!network.cw20Ics20Address){
+    if (!network.cw20Ics20Address) {
         chainConfigs.cw20_ics20.admin ||= chainConfigs.generalInfo.multisig
-        chainConfigs.cw20_ics20.initMsg.gov_contract ||= network.governanceAddress
+        chainConfigs.cw20_ics20.initMsg.gov_contract ||= chainConfigs.generalInfo.multisig
 
         console.log('Deploying CW20-ICS20...')
         let resp = await deployContract(
             terra,
             wallet,
             chainConfigs.cw20_ics20.admin,
-            join(ARTIFACTS_PATH, 'cw20_ics20.wasm'),
+            join(ARTIFACTS_PATH, 'astroport_cw20_ics20.wasm'),
             chainConfigs.cw20_ics20.initMsg,
             chainConfigs.cw20_ics20.label,
         )
@@ -55,13 +50,13 @@ async function uploadAndInitICS20(terra: LCDClient, wallet: any) {
 async function uploadAndInitController(terra: LCDClient, wallet: any) {
     let network = readArtifact(terra.config.chainID)
 
-    if (!network.assemblyAddress) {
-        throw new Error("Please deploy the Assembly contract")
-    }
-
     if (!network.ibcControllerAddress) {
+
+        if (!chainConfigs.controller.initMsg.assembly) {
+            throw new Error("Please deploy the Assembly contract")
+        }
+
         chainConfigs.controller.initMsg.owner ||= chainConfigs.generalInfo.multisig
-        chainConfigs.controller.initMsg.assembly ||= network.assemblyAddress
         chainConfigs.controller.admin ||= chainConfigs.generalInfo.multisig
 
         console.log('Deploying IBC Controller...')

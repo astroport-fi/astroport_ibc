@@ -1,5 +1,5 @@
 [package]
-name = "cw20-ics20"
+name = "astroport-cw20-ics20"
 version = "0.15.1"
 edition = "2021"
 
@@ -8,3 +8,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cw20-ics20-orig = { package = "cw20-ics20", version = "0.15.1" }
+
+[dev-dependencies]
+cosmwasm-schema = "1.1"

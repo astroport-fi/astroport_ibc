@@ -1,17 +1,13 @@
 {
   "generalInfo": {
-    "multisig": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j"
+    "multisig": "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v"
   },
   "cw20_ics20": {
     "admin": null,
     "initMsg": {
       "default_timeout": 360,
-      "gov_contract": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j",
-      "allowlist": [
-        {
-          "contract": "terra167dsqkh2alurx997wmycw9ydkyu54gyswe3ygmrs4lwume3vmwks8ruqnv"
-        }
-      ],
+      "gov_contract": null,
+      "allowlist": [],
       "default_gas_limit": null
     },
     "label": "Astroport CW20-ICS20"
