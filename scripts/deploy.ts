@@ -21,7 +21,6 @@ async function main() {
 
     await uploadAndInitICS20(terra, wallet)
     await uploadAndInitController(terra, wallet)
-    console.log('FINISH')
 }
 
 async function uploadAndInitICS20(terra: LCDClient, wallet: any) {
@@ -58,7 +57,6 @@ async function uploadAndInitController(terra: LCDClient, wallet: any) {
         }
 
         chainConfigs.controller.initMsg.owner ||= chainConfigs.generalInfo.multisig
-        chainConfigs.controller.initMsg.assembly ||= network.assemblyAddress
         chainConfigs.controller.admin ||= chainConfigs.generalInfo.multisig
 
         console.log('Deploying IBC Controller...')

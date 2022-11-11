@@ -33,6 +33,12 @@ impl Config {
             self.gov_channel = Some(gov_channel);
         }
 
+        if let Some(accept_new_connections) = params.accept_new_connections {
+            if accept_new_connections {
+                self.gov_channel = None;
+            }
+        }
+
         if let Some(main_controller_port) = params.main_controller_port {
             self.main_controller_port = main_controller_port;
         }

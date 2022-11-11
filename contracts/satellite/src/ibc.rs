@@ -268,6 +268,7 @@ mod tests {
                 main_maker: None,
                 transfer_channel: None,
                 timeout: None,
+                accept_new_connections: None,
             }),
         )
         .unwrap();
@@ -315,6 +316,7 @@ mod tests {
                 main_maker: None,
                 transfer_channel: None,
                 timeout: None,
+                accept_new_connections: None,
             }),
         )
         .unwrap();

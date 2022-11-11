@@ -6,10 +6,10 @@
     "admin": null,
     "initMsg": {
       "default_timeout": 360,
-      "gov_contract": "terra190fxpjfkp6cygr2k9unzjurq42dyehqd579h5j",
+      "gov_contract": null,
       "allowlist": [
         {
-          "contract": "terra167dsqkh2alurx997wmycw9ydkyu54gyswe3ygmrs4lwume3vmwks8ruqnv"
+          "contract": "terra1nsuqsk6kh58ulczatwev87ttq2z6r3pusulg9r24mfj2fvtzd4uq3exn26"
         }
       ],
       "default_gas_limit": null
@@ -20,7 +20,7 @@
     "admin": null,
     "initMsg": {
       "owner": null,
-      "assembly": null,
+      "assembly": "terra1k9j8rcyk87v5jvfla2m9wp200azegjz0eshl7n2pwv852a7ssceqsnn7pq",
       "timeout": 360
     },
     "label": "Astroport Controller"
