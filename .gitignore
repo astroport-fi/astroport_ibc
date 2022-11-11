@@ -13,6 +13,7 @@
 # IDEs
 *.iml
 .idea
+.vscode
 
 /artifacts/
 
