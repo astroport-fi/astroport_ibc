@@ -16,6 +16,7 @@
 .vscode
 
 /artifacts/
+/contracts/**/schema/
 
 /scripts/node_modules
 scripts/.env
