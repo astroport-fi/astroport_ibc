@@ -1,3 +1,3 @@
 # Astroport cw20-ics20
 
-It's just a help wrapper around the standard cosmwasm cw20-ics20 implementation
+This is wrapper over the standard cosmwasm cw20-ics20 implementation. We need this only for convenient compilation using rust-optimizer docker containter.
