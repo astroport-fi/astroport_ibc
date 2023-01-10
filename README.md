@@ -2,6 +2,10 @@
 
 This repo contains Astroport IBC related contracts.
 
+## Contracts diagram
+
+![contracts diagram](./assets/ibc.png "Contracts Diagram")
+
 ## Contracts
 
 | Name                           | Description                      |
