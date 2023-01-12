@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - main
+      - release
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
 
 jobs:
   test_and_check:
@@ -19,6 +21,12 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ github.token }}
+
+      - uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.CORE_PRIVATE_KEY }}
+            ${{ secrets.GOV_PRIVATE_KEY }}
 
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -37,7 +45,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.64.0
+          toolchain: 1.65.0
           override: true
           components: rustfmt, clippy
 
@@ -54,7 +62,7 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-          
+
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:

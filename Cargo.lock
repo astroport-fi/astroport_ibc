@@ -20,6 +20,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
 
 [[package]]
+name = "ap-native-coin-registry"
+version = "1.0.0"
+source = "git+ssh://git@github.com/astroport-fi/hidden_astroport_core.git#43d2fd56afdb3024e2074cce9f3754058461fc60"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+]
+
+[[package]]
 name = "astro-satellite"
 version = "0.1.0"
 dependencies = [
@@ -47,9 +57,10 @@ dependencies = [
 
 [[package]]
 name = "astroport"
-version = "2.0.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_core.git#893673cd079131525a06c4bc0a2b616661d1dcb9"
+version = "2.1.0"
+source = "git+ssh://git@github.com/astroport-fi/hidden_astroport_core.git#43d2fd56afdb3024e2074cce9f3754058461fc60"
 dependencies = [
+ "ap-native-coin-registry",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
@@ -68,8 +79,8 @@ dependencies = [
 
 [[package]]
 name = "astroport-governance"
-version = "1.1.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git#fb28a78b732754b8f9ea270787983a34926f4ac9"
+version = "1.2.0"
+source = "git+ssh://git@github.com/astroport-fi/hidden_astroport_governance.git#467ccb880cd7d95ca5090a9783559622b30a7034"
 dependencies = [
  "astroport",
  "cosmwasm-schema",

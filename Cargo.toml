@@ -15,3 +15,9 @@ codegen-units = 1
 panic = 'abort'
 incremental = false
 overflow-checks = true
+
+[patch."https://github.com/astroport-fi/hidden_astroport_governance.git"]
+astroport-governance = { git = "ssh://git@github.com/astroport-fi/hidden_astroport_governance.git" }
+
+[patch."https://github.com/astroport-fi/hidden_astroport_core.git"]
+astroport = { git = "ssh://git@github.com/astroport-fi/hidden_astroport_core.git" }
