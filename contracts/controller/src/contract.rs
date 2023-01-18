@@ -7,18 +7,19 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
-use astro_satellite_package::QueryMsg;
-use ibc_controller_package::astroport_governance::astroport::asset::addr_validate_to_lower;
 use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
+use ibc_controller_package::QueryMsg;
 use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
 
 use crate::error::ContractError;
-use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
+use crate::state::{Config, CONFIG, LAST_ERROR, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub(crate) const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub(crate) const MIN_TIMEOUT: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -28,11 +29,16 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if !(MIN_TIMEOUT..=u64::MAX).contains(&msg.timeout) {
+        return Err(ContractError::TimeoutLimitsError {});
+    }
+
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, &msg.owner)?,
-            assembly: addr_validate_to_lower(deps.api, &msg.assembly)?,
+            owner: deps.api.addr_validate(&msg.owner)?,
+            assembly: deps.api.addr_validate(&msg.assembly)?,
             timeout: msg.timeout,
         },
     )?;
@@ -54,8 +60,12 @@ pub fn execute(
             proposal_id,
             messages,
         } => {
-            if config.owner != info.sender {
+            if config.assembly != info.sender {
                 return Err(ContractError::Unauthorized {});
+            }
+
+            if PROPOSAL_STATE.has(deps.storage, proposal_id) {
+                return Err(ContractError::ProposalAlreadyExists { proposal_id });
             }
 
             let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
@@ -76,7 +86,7 @@ pub fn execute(
         ExecuteMsg::UpdateConfig { new_assembly } => CONFIG
             .update(deps.storage, |mut config| {
                 if info.sender == config.owner {
-                    config.assembly = addr_validate_to_lower(deps.api, &new_assembly)?;
+                    config.assembly = deps.api.addr_validate(&new_assembly)?;
                     Ok(config)
                 } else {
                     Err(ContractError::Unauthorized {})
@@ -118,12 +128,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
             let state = PROPOSAL_STATE.load(deps.storage, id)?;
             Ok(to_binary(&state)?)
         }
+        QueryMsg::LastError {} => Ok(to_binary(&LAST_ERROR.load(deps.storage)?)?),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    Ok(Response::default())
+    Err(ContractError::MigrationError {})
 }
 
 #[cfg(test)]

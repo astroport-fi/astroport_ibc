@@ -11,7 +11,7 @@ use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::IbcProposal;
 use itertools::Itertools;
 
-use crate::contract::RECEIVE_ID;
+use crate::contract::{CONTRACT_NAME, RECEIVE_ID};
 use crate::error::{ContractError, Never};
 use crate::state::{CONFIG, REPLY_DATA};
 
@@ -146,7 +146,7 @@ pub fn ibc_packet_timeout(
     _env: Env,
     _msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    unimplemented!()
+    unimplemented!("{} doesn't need a timeout of the packet.", CONTRACT_NAME)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -155,7 +155,10 @@ pub fn ibc_packet_ack(
     _env: Env,
     _msg: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    unimplemented!()
+    unimplemented!(
+        "{} doesn't need an acknowledgment of the packet.",
+        CONTRACT_NAME
+    )
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -196,7 +199,23 @@ mod tests {
         (deps, env, info)
     }
 
-    pub fn init_contract(deps: DepsMut, env: Env, info: MessageInfo) {
+    pub fn init_contract(mut deps: DepsMut, env: Env, info: MessageInfo) {
+        let err = instantiate(
+            deps.branch(),
+            env.clone(),
+            info.clone(),
+            InstantiateMsg {
+                owner: OWNER.to_string(),
+                astro_denom: "".to_string(),
+                transfer_channel: "".to_string(),
+                main_controller: CONTROLLER.to_string(),
+                main_maker: "".to_string(),
+                timeout: 0,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(ContractError::TimeoutLimitsError {}, err);
+
         instantiate(
             deps,
             env,
@@ -207,7 +226,7 @@ mod tests {
                 transfer_channel: "".to_string(),
                 main_controller: CONTROLLER.to_string(),
                 main_maker: "".to_string(),
-                timeout: 0,
+                timeout: 1,
             },
         )
         .unwrap();

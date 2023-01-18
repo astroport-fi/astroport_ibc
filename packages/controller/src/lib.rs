@@ -48,6 +48,9 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     #[returns(ProposalStatus)]
     ProposalState { id: u64 },
+
+    #[returns(String)]
+    LastError {},
 }
 
 pub use astroport_governance;

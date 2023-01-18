@@ -1,6 +1,8 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
+use crate::contract::MIN_TIMEOUT;
+use crate::error::ContractError;
 use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
 use astro_satellite_package::UpdateConfigMsg;
 use cosmwasm_schema::cw_serde;
@@ -24,9 +26,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub(crate) fn update(&mut self, params: UpdateConfigMsg) {
+    pub(crate) fn update(&mut self, params: UpdateConfigMsg) -> Result<(), ContractError> {
         if let Some(astro_denom) = params.astro_denom {
             self.astro_denom = astro_denom;
+        }
+
+        if params.gov_channel.is_some() && params.accept_new_connections.is_some() {
+            return Err(ContractError::UpdateChannelConnectionError {});
         }
 
         if let Some(gov_channel) = params.gov_channel {
@@ -40,7 +46,7 @@ impl Config {
         }
 
         if let Some(main_controller_port) = params.main_controller_port {
-            self.main_controller_port = main_controller_port;
+            self.main_controller_port = format!("wasm.{}", main_controller_port);
         }
 
         if let Some(main_maker) = params.main_maker {
@@ -52,8 +58,13 @@ impl Config {
         }
 
         if let Some(timeout) = params.timeout {
+            if !(MIN_TIMEOUT..=u64::MAX).contains(&timeout) {
+                return Err(ContractError::TimeoutLimitsError {});
+            }
             self.timeout = timeout;
         }
+
+        Ok(())
     }
 }
 

@@ -5,6 +5,7 @@ use cosmwasm_std::{
     IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
+use crate::contract::CONTRACT_NAME;
 use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 use ibc_controller_package::IbcProposal;
@@ -55,6 +56,23 @@ pub fn ibc_channel_connect(
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
+
+    // TODO!
+    // if let Some(counter_version) = msg.counterparty_version() {
+    //     if counter_version != IBC_APP_VERSION {
+    //         return Err(StdError::generic_err(format!(
+    //             "Counterparty version must be `{}`",
+    //             IBC_APP_VERSION
+    //         )));
+    //     }
+    // }
+
+    // if channel.order != IBC_ORDERING {
+    //     return Err(StdError::generic_err(
+    //         "Ordering is invalid. The channel must be unordered",
+    //     ));
+    // }
+
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_connect")
         .add_attribute("channel_id", &channel.endpoint.channel_id))
@@ -66,7 +84,7 @@ pub fn ibc_packet_receive(
     _env: Env,
     _msg: IbcPacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
-    unimplemented!()
+    unimplemented!("{} doesn't need to receive an IBC packet.", CONTRACT_NAME)
 }
 
 fn confirm_assembly(

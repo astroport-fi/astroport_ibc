@@ -9,7 +9,6 @@ use cw_utils::must_pay;
 use itertools::Itertools;
 
 use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
-use astro_satellite_package::astroport_governance::astroport::asset::addr_validate_to_lower;
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
@@ -18,10 +17,11 @@ use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub(crate) const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub(crate) const RECEIVE_ID: u64 = 1;
+pub(crate) const MIN_TIMEOUT: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -32,10 +32,14 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    if !(MIN_TIMEOUT..=u64::MAX).contains(&msg.timeout) {
+        return Err(ContractError::TimeoutLimitsError {});
+    }
+
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, &msg.owner)?,
+            owner: deps.api.addr_validate(&msg.owner)?,
             astro_denom: msg.astro_denom,
             main_controller_port: format!("wasm.{}", msg.main_controller),
             main_maker: msg.main_maker,
@@ -87,7 +91,7 @@ pub fn execute(
         ExecuteMsg::UpdateConfig(params) => {
             CONFIG.update(deps.storage, |mut config| {
                 if config.owner == info.sender {
-                    config.update(params);
+                    config.update(params)?;
                     Ok(config)
                 } else {
                     Err(ContractError::Unauthorized {})
@@ -160,5 +164,5 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+    Err(ContractError::MigrationError {})
 }

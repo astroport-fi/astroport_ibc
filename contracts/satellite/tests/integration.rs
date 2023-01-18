@@ -53,7 +53,7 @@ fn test_check_messages() {
     let mut app = mock_app(&owner, vec![]);
 
     let satellite_code = app.store_code(satellite_contract());
-    let satellite_addr = app
+    let err = app
         .instantiate_contract(
             satellite_code,
             owner.clone(),
@@ -64,6 +64,28 @@ fn test_check_messages() {
                 main_controller: "none".to_string(),
                 main_maker: "none".to_string(),
                 timeout: 0,
+            },
+            &[],
+            "Satellite label",
+            None,
+        )
+        .unwrap_err();
+    assert_eq!(
+        "Timeout must be within limits (1 < timeout <= 18446744073709551615)",
+        err.root_cause().to_string()
+    );
+
+    let satellite_addr = app
+        .instantiate_contract(
+            satellite_code,
+            owner.clone(),
+            &InstantiateMsg {
+                owner: owner.to_string(),
+                astro_denom: "none".to_string(),
+                transfer_channel: "none".to_string(),
+                main_controller: "none".to_string(),
+                main_maker: "none".to_string(),
+                timeout: 1,
             },
             &[],
             "Satellite label",
