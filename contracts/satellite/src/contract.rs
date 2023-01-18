@@ -22,6 +22,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub(crate) const RECEIVE_ID: u64 = 1;
 pub(crate) const MIN_TIMEOUT: u64 = 1;
+pub(crate) const MAX_TIMEOUT: u64 = 31556926; // one year in seconds
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -32,7 +33,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if !(MIN_TIMEOUT..=u64::MAX).contains(&msg.timeout) {
+    if !(MIN_TIMEOUT..=MAX_TIMEOUT).contains(&msg.timeout) {
         return Err(ContractError::TimeoutLimitsError {});
     }
 

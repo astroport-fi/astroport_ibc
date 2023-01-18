@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-use crate::contract::MIN_TIMEOUT;
+use crate::contract::{MAX_TIMEOUT, MIN_TIMEOUT};
 use crate::error::ContractError;
 use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
 use astro_satellite_package::UpdateConfigMsg;
@@ -58,7 +58,7 @@ impl Config {
         }
 
         if let Some(timeout) = params.timeout {
-            if !(MIN_TIMEOUT..=u64::MAX).contains(&timeout) {
+            if !(MIN_TIMEOUT..=MAX_TIMEOUT).contains(&timeout) {
                 return Err(ContractError::TimeoutLimitsError {});
             }
             self.timeout = timeout;

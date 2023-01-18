@@ -1,4 +1,4 @@
-use crate::contract::MIN_TIMEOUT;
+use crate::contract::{MAX_TIMEOUT, MIN_TIMEOUT};
 use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -43,9 +43,9 @@ pub enum ContractError {
     UpdateChannelConnectionError {},
 
     #[error(
-        "Timeout must be within limits ({0} < timeout <= {1})",
+        "Timeout must be within limits ({0} <= timeout <= {1})",
         MIN_TIMEOUT,
-        u64::MAX
+        MAX_TIMEOUT
     )]
     TimeoutLimitsError {},
 }

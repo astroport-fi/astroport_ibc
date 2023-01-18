@@ -71,7 +71,7 @@ fn test_check_messages() {
         )
         .unwrap_err();
     assert_eq!(
-        "Timeout must be within limits (1 < timeout <= 18446744073709551615)",
+        "Timeout must be within limits (1 <= timeout <= 31556926)",
         err.root_cause().to_string()
     );
 

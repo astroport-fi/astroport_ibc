@@ -1,4 +1,4 @@
-use crate::contract::MIN_TIMEOUT;
+use crate::contract::{MAX_TIMEOUT, MIN_TIMEOUT};
 use cosmwasm_std::StdError;
 use thiserror::Error;
 
@@ -17,9 +17,9 @@ pub enum ContractError {
     ProposalAlreadyExists { proposal_id: u64 },
 
     #[error(
-        "Timeout must be within limits ({0} < timeout <= {1})",
+        "Timeout must be within limits ({0} <= timeout <= {1})",
         MIN_TIMEOUT,
-        u64::MAX
+        MAX_TIMEOUT
     )]
     TimeoutLimitsError {},
 }
