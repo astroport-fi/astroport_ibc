@@ -57,21 +57,20 @@ pub fn ibc_channel_connect(
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
 
-    // TODO!
-    // if let Some(counter_version) = msg.counterparty_version() {
-    //     if counter_version != IBC_APP_VERSION {
-    //         return Err(StdError::generic_err(format!(
-    //             "Counterparty version must be `{}`",
-    //             IBC_APP_VERSION
-    //         )));
-    //     }
-    // }
+    if channel.order != IBC_ORDERING {
+        return Err(StdError::generic_err(
+            "Ordering is invalid. The channel must be unordered",
+        ));
+    }
 
-    // if channel.order != IBC_ORDERING {
-    //     return Err(StdError::generic_err(
-    //         "Ordering is invalid. The channel must be unordered",
-    //     ));
-    // }
+    if let Some(counter_version) = msg.counterparty_version() {
+        if counter_version != IBC_APP_VERSION {
+            return Err(StdError::generic_err(format!(
+                "Counterparty version must be `{}`",
+                IBC_APP_VERSION
+            )));
+        }
+    }
 
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_connect")
