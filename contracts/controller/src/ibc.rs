@@ -128,7 +128,7 @@ pub fn ibc_packet_timeout(
 
     Ok(IbcBasicResponse::new()
         .add_submessage(confirm_assembly(
-            &config.assembly,
+            &config.owner,
             ibc_proposal.id,
             new_status,
         )?)
@@ -172,7 +172,7 @@ pub fn ibc_packet_ack(
 
     Ok(IbcBasicResponse::new()
         .add_submessage(confirm_assembly(
-            &config.assembly,
+            &config.owner,
             ibc_proposal.id,
             new_status,
         )?)

@@ -4,7 +4,6 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 #[cw_serde]
 pub struct InstantiateMsg {
     pub owner: String,
-    pub assembly: String,
     pub timeout: u64,
 }
 
@@ -20,9 +19,6 @@ pub enum ExecuteMsg {
         channel_id: String,
         proposal_id: u64,
         messages: Vec<ProposalMessage>,
-    },
-    UpdateConfig {
-        new_assembly: String,
     },
     /// Creates a request to change contract ownership
     /// ## Executor

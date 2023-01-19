@@ -14,6 +14,7 @@ use ibc_controller_package::QueryMsg;
 use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
 
 use crate::error::ContractError;
+use crate::migration::migrate_config;
 use crate::state::{Config, CONFIG, LAST_ERROR, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
 
 pub(crate) const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -39,7 +40,6 @@ pub fn instantiate(
         deps.storage,
         &Config {
             owner: deps.api.addr_validate(&msg.owner)?,
-            assembly: deps.api.addr_validate(&msg.assembly)?,
             timeout: msg.timeout,
         },
     )?;
@@ -61,7 +61,7 @@ pub fn execute(
             proposal_id,
             messages,
         } => {
-            if config.assembly != info.sender {
+            if config.owner != info.sender {
                 return Err(ContractError::Unauthorized {});
             }
 
@@ -84,16 +84,6 @@ pub fn execute(
                 .add_attribute("action", "ibc_execute")
                 .add_attribute("channel", channel_id))
         }
-        ExecuteMsg::UpdateConfig { new_assembly } => CONFIG
-            .update(deps.storage, |mut config| {
-                if info.sender == config.owner {
-                    config.assembly = deps.api.addr_validate(&new_assembly)?;
-                    Ok(config)
-                } else {
-                    Err(ContractError::Unauthorized {})
-                }
-            })
-            .map(|_| Response::new().add_attribute("action", "update_config")),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => propose_new_owner(
             deps,
             info,
@@ -134,12 +124,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn migrate(mut deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
         "ibc-controller" => match contract_version.version.as_ref() {
-            "0.1.0" => {}
+            "0.1.0" => migrate_config(&mut deps)?,
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
