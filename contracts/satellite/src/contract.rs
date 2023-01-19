@@ -18,7 +18,7 @@ use astroport_ibc::TIMEOUT_LIMITS;
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
 
-pub(crate) const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub(crate) const RECEIVE_ID: u64 = 1;
