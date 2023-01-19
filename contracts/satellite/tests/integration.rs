@@ -71,7 +71,7 @@ fn test_check_messages() {
         )
         .unwrap_err();
     assert_eq!(
-        "Timeout must be within limits (1 <= timeout <= 31556926)",
+        "Timeout must be within limits (60 <= timeout <= 600)",
         err.root_cause().to_string()
     );
 
@@ -85,7 +85,7 @@ fn test_check_messages() {
                 transfer_channel: "none".to_string(),
                 main_controller: "none".to_string(),
                 main_maker: "none".to_string(),
-                timeout: 1,
+                timeout: 60,
             },
             &[],
             "Satellite label",

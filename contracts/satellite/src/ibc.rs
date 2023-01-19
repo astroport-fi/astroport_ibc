@@ -11,7 +11,7 @@ use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::IbcProposal;
 use itertools::Itertools;
 
-use crate::contract::{CONTRACT_NAME, RECEIVE_ID};
+use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
 use crate::state::{CONFIG, REPLY_DATA};
 
@@ -146,7 +146,7 @@ pub fn ibc_packet_timeout(
     _env: Env,
     _msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    unimplemented!("{} doesn't need a timeout of the packet.", CONTRACT_NAME)
+    unimplemented!()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -155,10 +155,7 @@ pub fn ibc_packet_ack(
     _env: Env,
     _msg: IbcPacketAckMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    unimplemented!(
-        "{} doesn't need an acknowledgment of the packet.",
-        CONTRACT_NAME
-    )
+    unimplemented!()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -226,7 +223,7 @@ mod tests {
                 transfer_channel: "".to_string(),
                 main_controller: CONTROLLER.to_string(),
                 main_maker: "".to_string(),
-                timeout: 1,
+                timeout: 60,
             },
         )
         .unwrap();
@@ -281,7 +278,7 @@ mod tests {
             ExecuteMsg::UpdateConfig(UpdateConfigMsg {
                 astro_denom: None,
                 gov_channel: Some(GOV_CHANNEL.to_string()),
-                main_controller_port: None,
+                main_controller_addr: None,
                 main_maker: None,
                 transfer_channel: None,
                 timeout: None,
@@ -329,7 +326,7 @@ mod tests {
             ExecuteMsg::UpdateConfig(UpdateConfigMsg {
                 astro_denom: None,
                 gov_channel: Some(GOV_CHANNEL.to_string()),
-                main_controller_port: None,
+                main_controller_addr: None,
                 main_maker: None,
                 transfer_channel: None,
                 timeout: None,

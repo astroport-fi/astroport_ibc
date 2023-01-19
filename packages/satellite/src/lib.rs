@@ -22,7 +22,7 @@ pub struct InstantiateMsg {
 pub struct UpdateConfigMsg {
     pub astro_denom: Option<String>,
     pub gov_channel: Option<String>,
-    pub main_controller_port: Option<String>,
+    pub main_controller_addr: Option<String>,
     pub main_maker: Option<String>,
     pub transfer_channel: Option<String>,
     pub accept_new_connections: Option<bool>,

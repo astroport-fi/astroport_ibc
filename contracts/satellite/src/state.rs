@@ -1,10 +1,10 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-use crate::contract::{MAX_TIMEOUT, MIN_TIMEOUT};
 use crate::error::ContractError;
 use astro_satellite_package::astroport_governance::astroport::common::OwnershipProposal;
 use astro_satellite_package::UpdateConfigMsg;
+use astroport_ibc::TIMEOUT_LIMITS;
 use cosmwasm_schema::cw_serde;
 
 #[cw_serde]
@@ -32,7 +32,7 @@ impl Config {
         }
 
         if params.gov_channel.is_some() && params.accept_new_connections.is_some() {
-            return Err(ContractError::UpdateChannelConnectionError {});
+            return Err(ContractError::UpdateChannelError {});
         }
 
         if let Some(gov_channel) = params.gov_channel {
@@ -45,8 +45,8 @@ impl Config {
             }
         }
 
-        if let Some(main_controller_port) = params.main_controller_port {
-            self.main_controller_port = format!("wasm.{}", main_controller_port);
+        if let Some(main_controller_addr) = params.main_controller_addr {
+            self.main_controller_port = format!("wasm.{}", main_controller_addr);
         }
 
         if let Some(main_maker) = params.main_maker {
@@ -58,7 +58,7 @@ impl Config {
         }
 
         if let Some(timeout) = params.timeout {
-            if !(MIN_TIMEOUT..=MAX_TIMEOUT).contains(&timeout) {
+            if !TIMEOUT_LIMITS.contains(&timeout) {
                 return Err(ContractError::TimeoutLimitsError {});
             }
             self.timeout = timeout;

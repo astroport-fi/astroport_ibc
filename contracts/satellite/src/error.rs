@@ -1,4 +1,4 @@
-use crate::contract::{MAX_TIMEOUT, MIN_TIMEOUT};
+use astroport_ibc::TIMEOUT_LIMITS;
 use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -40,12 +40,12 @@ pub enum ContractError {
     MessagesCheckPassed {},
 
     #[error("The gov_channel and the accept_new_connections settings cannot be specified at the same time")]
-    UpdateChannelConnectionError {},
+    UpdateChannelError {},
 
     #[error(
         "Timeout must be within limits ({0} <= timeout <= {1})",
-        MIN_TIMEOUT,
-        MAX_TIMEOUT
+        TIMEOUT_LIMITS.start(),
+        TIMEOUT_LIMITS.end()
     )]
     TimeoutLimitsError {},
 }

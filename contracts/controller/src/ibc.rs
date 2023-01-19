@@ -5,7 +5,6 @@ use cosmwasm_std::{
     IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
-use crate::contract::CONTRACT_NAME;
 use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 use ibc_controller_package::IbcProposal;
@@ -83,7 +82,7 @@ pub fn ibc_packet_receive(
     _env: Env,
     _msg: IbcPacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
-    unimplemented!("{} doesn't need to receive an IBC packet.", CONTRACT_NAME)
+    unimplemented!()
 }
 
 fn confirm_assembly(

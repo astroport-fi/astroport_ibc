@@ -1,3 +1,4 @@
+use astroport_ibc::TIMEOUT_LIMITS;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -20,9 +21,6 @@ use crate::state::{Config, CONFIG, LAST_ERROR, OWNERSHIP_PROPOSAL, PROPOSAL_STAT
 pub(crate) const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub(crate) const MIN_TIMEOUT: u64 = 1;
-pub(crate) const MAX_TIMEOUT: u64 = 31556926; // one year in seconds
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -32,7 +30,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if !(MIN_TIMEOUT..=MAX_TIMEOUT).contains(&msg.timeout) {
+    if !TIMEOUT_LIMITS.contains(&msg.timeout) {
         return Err(ContractError::TimeoutLimitsError {});
     }
 

@@ -1,4 +1,4 @@
-use crate::contract::{MAX_TIMEOUT, MIN_TIMEOUT};
+use astroport_ibc::TIMEOUT_LIMITS;
 use cosmwasm_std::StdError;
 use thiserror::Error;
 
@@ -13,13 +13,13 @@ pub enum ContractError {
     #[error("Contract can't be migrated!")]
     MigrationError {},
 
-    #[error("A proposal with this ID already exists: {proposal_id}")]
+    #[error("Proposal with id {proposal_id} was already executed.")]
     ProposalAlreadyExists { proposal_id: u64 },
 
     #[error(
         "Timeout must be within limits ({0} <= timeout <= {1})",
-        MIN_TIMEOUT,
-        MAX_TIMEOUT
+        TIMEOUT_LIMITS.start(),
+        TIMEOUT_LIMITS.end()
     )]
     TimeoutLimitsError {},
 }

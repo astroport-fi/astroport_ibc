@@ -24,6 +24,7 @@ name = "astro-satellite"
 version = "0.2.0"
 dependencies = [
  "astro-satellite-package",
+ "astroport-ibc",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -76,6 +77,10 @@ dependencies = [
  "cw-storage-plus",
  "cw20",
 ]
+
+[[package]]
+name = "astroport-ibc"
+version = "0.1.0"
 
 [[package]]
 name = "base16ct"
@@ -544,6 +549,7 @@ name = "ibc-controller"
 version = "0.2.0"
 dependencies = [
  "astro-satellite-package",
+ "astroport-ibc",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
