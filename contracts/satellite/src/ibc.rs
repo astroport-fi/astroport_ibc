@@ -13,7 +13,7 @@ use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
-use crate::state::{CONFIG, REPLY_DATA};
+use crate::state::{CONFIG, REPLY_DATA, RESULTS};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -94,10 +94,10 @@ pub fn ibc_channel_connect(
 /// We should not return an error if possible, but rather an acknowledgement of failure
 pub fn ibc_packet_receive(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    do_packet_receive(deps, msg).or_else(|err| {
+    do_packet_receive(deps, env, msg).or_else(|err| {
         Ok(IbcReceiveResponse::new()
             .add_attribute("action", "ibc_packet_receive")
             .set_ack(ack_fail(err)))
@@ -106,6 +106,7 @@ pub fn ibc_packet_receive(
 
 fn do_packet_receive(
     deps: DepsMut,
+    env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -136,6 +137,8 @@ fn do_packet_receive(
         }
         REPLY_DATA.save(deps.storage, &id)?;
         response = response.add_submessages(messages)
+    } else {
+        RESULTS.save(deps.storage, id, &env.block.height)?
     }
     Ok(response)
 }
