@@ -13,7 +13,7 @@ use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
-use crate::state::{CONFIG, REPLY_DATA, RESULTS};
+use crate::state::{store_proposal, CONFIG, REPLY_DATA};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -69,6 +69,15 @@ pub fn ibc_channel_connect(
     msg: IbcChannelConnectMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
     let channel = msg.channel();
+
+    if let Some(counter_version) = msg.counterparty_version() {
+        if counter_version != IBC_APP_VERSION {
+            return Err(ContractError::Std(StdError::generic_err(format!(
+                "Counterparty version must be `{}`",
+                IBC_APP_VERSION
+            ))));
+        }
+    }
 
     let config = CONFIG.load(deps.storage)?;
     match config.gov_channel {
@@ -138,7 +147,7 @@ fn do_packet_receive(
         REPLY_DATA.save(deps.storage, &id)?;
         response = response.add_submessages(messages)
     } else {
-        RESULTS.save(deps.storage, id, &env.block.height)?
+        store_proposal(deps, env, id)?;
     }
     Ok(response)
 }

@@ -1,4 +1,4 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, DepsMut, Env, StdResult};
 use cw_storage_plus::{Item, Map};
 
 use crate::error::ContractError;
@@ -79,3 +79,8 @@ pub const REPLY_DATA: Item<u64> = Item::new("reply_data");
 
 /// Contains a proposal to change contract ownership.
 pub const OWNERSHIP_PROPOSAL: Item<OwnershipProposal> = Item::new("ownership_proposal");
+
+/// Stores proposal info
+pub fn store_proposal(deps: DepsMut, env: Env, proposal_id: u64) -> StdResult<()> {
+    RESULTS.save(deps.storage, proposal_id, &env.block.height)
+}

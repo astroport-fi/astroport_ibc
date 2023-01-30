@@ -16,7 +16,7 @@ use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use astroport_ibc::TIMEOUT_LIMITS;
 
 use crate::error::ContractError;
-use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
+use crate::state::{store_proposal, Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -57,7 +57,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     let proposal_id = REPLY_DATA.load(deps.storage)?;
     match reply.id {
         RECEIVE_ID => {
-            RESULTS.save(deps.storage, proposal_id, &env.block.height)?;
+            store_proposal(deps, env, proposal_id)?;
             Ok(Response::new())
         }
         _ => Err(ContractError::InvalidReplyId {}),
