@@ -40,11 +40,8 @@ fn noop_contract() -> Box<dyn Contract<Empty>> {
     ))
 }
 
-fn proposal_msg(order: u64, msg: CosmosMsg) -> ProposalMessage {
-    ProposalMessage {
-        order: order.into(),
-        msg,
-    }
+fn proposal_msg(msg: CosmosMsg) -> ProposalMessage {
+    ProposalMessage { msg }
 }
 
 #[test]
@@ -100,12 +97,7 @@ fn test_check_messages() {
 
     let messages: Vec<_> = (0..5)
         .into_iter()
-        .map(|i| {
-            proposal_msg(
-                i,
-                wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into(),
-            )
-        })
+        .map(|_| proposal_msg(wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into()))
         .collect();
 
     let err = app

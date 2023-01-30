@@ -144,7 +144,7 @@ pub fn migrate(mut deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Co
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128, Uint64};
+    use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128};
 
     use crate::test_utils::{init_contract, mock_all, OWNER};
     use ibc_controller_package::astroport_governance::assembly::ProposalMessage;
@@ -160,7 +160,6 @@ mod tests {
         let channel_id = "channel-0".to_string();
         let proposal_id = 1;
         let proposal_msg = ProposalMessage {
-            order: Uint64::new(1),
             msg: CosmosMsg::Bank(BankMsg::Send {
                 to_address: "foreign_addr".to_string(),
                 amount: vec![Coin {

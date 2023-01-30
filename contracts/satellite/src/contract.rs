@@ -6,7 +6,6 @@ use cosmwasm_std::{
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
-use itertools::Itertools;
 
 use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
 use astro_satellite_package::astroport_governance::astroport::common::{
@@ -136,11 +135,7 @@ pub fn execute(
 }
 
 fn check_messages(env: Env, messages: Vec<ProposalMessage>) -> Result<Response, ContractError> {
-    let mut messages: Vec<_> = messages
-        .into_iter()
-        .sorted_by(|a, b| a.order.cmp(&b.order))
-        .map(|message| message.msg)
-        .collect();
+    let mut messages: Vec<_> = messages.into_iter().map(|message| message.msg).collect();
     messages.push(CosmosMsg::Wasm(wasm_execute(
         env.contract.address,
         &ExecuteMsg::CheckMessagesPassed {},

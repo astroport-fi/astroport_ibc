@@ -9,7 +9,6 @@ use cosmwasm_std::{
 
 use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::IbcProposal;
-use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
@@ -137,7 +136,6 @@ fn do_packet_receive(
     if !messages.is_empty() {
         let mut messages: Vec<_> = messages
             .into_iter()
-            .sorted_by(|a, b| a.order.cmp(&b.order))
             .map(|message| SubMsg::new(message.msg))
             .collect();
         if let Some(last_msg) = messages.last_mut() {
@@ -362,7 +360,6 @@ mod tests {
         let ibc_proposal = IbcProposal {
             id: 1,
             messages: vec![ProposalMessage {
-                order: 1u64.into(),
                 // pass any valid CosmosMsg message.
                 // The meaning of this msg doesn't matter as this is just a unit test
                 msg: CosmosMsg::Custom(Empty {}),
