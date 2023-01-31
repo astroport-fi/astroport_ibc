@@ -7,7 +7,6 @@ use cosmwasm_std::{
 use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
 
-use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
@@ -134,8 +133,7 @@ pub fn execute(
     }
 }
 
-fn check_messages(env: Env, messages: Vec<ProposalMessage>) -> Result<Response, ContractError> {
-    let mut messages: Vec<_> = messages.into_iter().map(|message| message.msg).collect();
+fn check_messages(env: Env, mut messages: Vec<CosmosMsg>) -> Result<Response, ContractError> {
     messages.push(CosmosMsg::Wasm(wasm_execute(
         env.contract.address,
         &ExecuteMsg::CheckMessagesPassed {},

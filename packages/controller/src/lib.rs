@@ -1,4 +1,4 @@
-use astroport_governance::assembly::{ProposalMessage, ProposalStatus};
+use astroport_governance::assembly::ProposalStatus;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
@@ -10,7 +10,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub struct IbcProposal {
     pub id: u64,
-    pub messages: Vec<ProposalMessage>,
+    pub messages: Vec<CosmosMsg>,
 }
 
 #[cw_serde]
@@ -18,7 +18,7 @@ pub enum ExecuteMsg {
     IbcExecuteProposal {
         channel_id: String,
         proposal_id: u64,
-        messages: Vec<ProposalMessage>,
+        messages: Vec<CosmosMsg>,
     },
     /// Creates a request to change contract ownership
     /// ## Executor
@@ -50,3 +50,4 @@ pub enum QueryMsg {
 }
 
 pub use astroport_governance;
+use cosmwasm_std::CosmosMsg;

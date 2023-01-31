@@ -146,10 +146,8 @@ pub fn migrate(mut deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Co
 mod tests {
     use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128};
 
-    use crate::test_utils::{init_contract, mock_all, OWNER};
-    use ibc_controller_package::astroport_governance::assembly::ProposalMessage;
-
     use super::*;
+    use crate::test_utils::{init_contract, mock_all, OWNER};
 
     #[test]
     fn test_ibc_execute() {
@@ -159,15 +157,13 @@ mod tests {
 
         let channel_id = "channel-0".to_string();
         let proposal_id = 1;
-        let proposal_msg = ProposalMessage {
-            msg: CosmosMsg::Bank(BankMsg::Send {
-                to_address: "foreign_addr".to_string(),
-                amount: vec![Coin {
-                    denom: "stake".to_string(),
-                    amount: Uint128::new(100),
-                }],
-            }),
-        };
+        let proposal_msg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: "foreign_addr".to_string(),
+            amount: vec![Coin {
+                denom: "stake".to_string(),
+                amount: Uint128::new(100),
+            }],
+        });
         let msg = ExecuteMsg::IbcExecuteProposal {
             channel_id,
             proposal_id,

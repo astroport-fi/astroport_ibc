@@ -1,10 +1,8 @@
 use astro_satellite::contract::{execute, instantiate, query, reply};
 use astro_satellite::error::ContractError;
-use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg};
 use cosmwasm_std::{
-    wasm_execute, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdResult,
+    wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 
@@ -38,10 +36,6 @@ fn noop_contract() -> Box<dyn Contract<Empty>> {
         noop_execute,
         noop_query,
     ))
-}
-
-fn proposal_msg(msg: CosmosMsg) -> ProposalMessage {
-    ProposalMessage { msg }
 }
 
 #[test]
@@ -97,7 +91,7 @@ fn test_check_messages() {
 
     let messages: Vec<_> = (0..5)
         .into_iter()
-        .map(|_| proposal_msg(wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into()))
+        .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
     let err = app

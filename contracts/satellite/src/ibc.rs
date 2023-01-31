@@ -134,10 +134,7 @@ fn do_packet_receive(
         .add_attribute("action", "ibc_packet_receive")
         .set_ack(ack_ok());
     if !messages.is_empty() {
-        let mut messages: Vec<_> = messages
-            .into_iter()
-            .map(|message| SubMsg::new(message.msg))
-            .collect();
+        let mut messages: Vec<_> = messages.into_iter().map(SubMsg::new).collect();
         if let Some(last_msg) = messages.last_mut() {
             last_msg.reply_on = ReplyOn::Success;
             last_msg.id = RECEIVE_ID;
@@ -181,7 +178,6 @@ pub fn ibc_channel_close(
 mod tests {
     use super::*;
     use crate::contract::{execute, instantiate};
-    use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
     use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
@@ -359,11 +355,11 @@ mod tests {
 
         let ibc_proposal = IbcProposal {
             id: 1,
-            messages: vec![ProposalMessage {
+            messages: vec![
                 // pass any valid CosmosMsg message.
                 // The meaning of this msg doesn't matter as this is just a unit test
-                msg: CosmosMsg::Custom(Empty {}),
-            }],
+                CosmosMsg::Custom(Empty {}),
+            ],
         };
         // Send messages via governance channel
         let msg = mock_ibc_packet_recv(GOV_CHANNEL, &ibc_proposal).unwrap();
