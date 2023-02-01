@@ -7,7 +7,7 @@ use ibc_controller_package::astroport_governance::astroport::common::OwnershipPr
 
 #[cw_serde]
 pub struct Config {
-    /// Address which is able to run IBC proposals and update config
+    /// Address which is able to run IBC proposals
     pub owner: Addr,
     /// when packet times out, measured on remote chain
     pub timeout: u64,
