@@ -1,6 +1,6 @@
-use astroport_governance::assembly::{ProposalMessage, ProposalStatus};
+use astroport_governance::assembly::ProposalStatus;
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Binary;
+use cosmwasm_std::{Binary, CosmosMsg};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -22,7 +22,7 @@ pub struct InstantiateMsg {
 pub struct UpdateConfigMsg {
     pub astro_denom: Option<String>,
     pub gov_channel: Option<String>,
-    pub main_controller_port: Option<String>,
+    pub main_controller_addr: Option<String>,
     pub main_maker: Option<String>,
     pub transfer_channel: Option<String>,
     pub accept_new_connections: Option<bool>,
@@ -33,7 +33,7 @@ pub struct UpdateConfigMsg {
 pub enum ExecuteMsg {
     TransferAstro {},
     UpdateConfig(UpdateConfigMsg),
-    CheckMessages(Vec<ProposalMessage>),
+    CheckMessages(Vec<CosmosMsg>),
     CheckMessagesPassed {},
     /// Creates a request to change contract ownership
     /// ## Executor

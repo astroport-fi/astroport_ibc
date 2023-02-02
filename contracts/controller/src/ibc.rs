@@ -55,6 +55,16 @@ pub fn ibc_channel_connect(
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
+
+    if let Some(counter_version) = msg.counterparty_version() {
+        if counter_version != IBC_APP_VERSION {
+            return Err(StdError::generic_err(format!(
+                "Counterparty version must be `{}`",
+                IBC_APP_VERSION
+            )));
+        }
+    }
+
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_connect")
         .add_attribute("channel_id", &channel.endpoint.channel_id))
@@ -111,7 +121,7 @@ pub fn ibc_packet_timeout(
 
     Ok(IbcBasicResponse::new()
         .add_submessage(confirm_assembly(
-            &config.assembly,
+            &config.owner,
             ibc_proposal.id,
             new_status,
         )?)
@@ -155,7 +165,7 @@ pub fn ibc_packet_ack(
 
     Ok(IbcBasicResponse::new()
         .add_submessage(confirm_assembly(
-            &config.assembly,
+            &config.owner,
             ibc_proposal.id,
             new_status,
         )?)

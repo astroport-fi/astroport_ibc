@@ -9,11 +9,10 @@ use cosmwasm_std::{
 
 use astro_satellite_package::IbcAckResult;
 use ibc_controller_package::IbcProposal;
-use itertools::Itertools;
 
 use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
-use crate::state::{CONFIG, REPLY_DATA};
+use crate::state::{store_proposal, CONFIG, REPLY_DATA};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -70,6 +69,15 @@ pub fn ibc_channel_connect(
 ) -> Result<IbcBasicResponse, ContractError> {
     let channel = msg.channel();
 
+    if let Some(counter_version) = msg.counterparty_version() {
+        if counter_version != IBC_APP_VERSION {
+            return Err(ContractError::Std(StdError::generic_err(format!(
+                "Counterparty version must be `{}`",
+                IBC_APP_VERSION
+            ))));
+        }
+    }
+
     let config = CONFIG.load(deps.storage)?;
     match config.gov_channel {
         Some(channel_id) => {
@@ -94,10 +102,10 @@ pub fn ibc_channel_connect(
 /// We should not return an error if possible, but rather an acknowledgement of failure
 pub fn ibc_packet_receive(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    do_packet_receive(deps, msg).or_else(|err| {
+    do_packet_receive(deps, env, msg).or_else(|err| {
         Ok(IbcReceiveResponse::new()
             .add_attribute("action", "ibc_packet_receive")
             .set_ack(ack_fail(err)))
@@ -106,6 +114,7 @@ pub fn ibc_packet_receive(
 
 fn do_packet_receive(
     deps: DepsMut,
+    env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -125,17 +134,15 @@ fn do_packet_receive(
         .add_attribute("action", "ibc_packet_receive")
         .set_ack(ack_ok());
     if !messages.is_empty() {
-        let mut messages: Vec<_> = messages
-            .into_iter()
-            .sorted_by(|a, b| a.order.cmp(&b.order))
-            .map(|message| SubMsg::new(message.msg))
-            .collect();
+        let mut messages: Vec<_> = messages.into_iter().map(SubMsg::new).collect();
         if let Some(last_msg) = messages.last_mut() {
             last_msg.reply_on = ReplyOn::Success;
             last_msg.id = RECEIVE_ID;
         }
         REPLY_DATA.save(deps.storage, &id)?;
         response = response.add_submessages(messages)
+    } else {
+        store_proposal(deps, env, id)?;
     }
     Ok(response)
 }
@@ -171,7 +178,6 @@ pub fn ibc_channel_close(
 mod tests {
     use super::*;
     use crate::contract::{execute, instantiate};
-    use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
     use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
@@ -196,7 +202,23 @@ mod tests {
         (deps, env, info)
     }
 
-    pub fn init_contract(deps: DepsMut, env: Env, info: MessageInfo) {
+    pub fn init_contract(mut deps: DepsMut, env: Env, info: MessageInfo) {
+        let err = instantiate(
+            deps.branch(),
+            env.clone(),
+            info.clone(),
+            InstantiateMsg {
+                owner: OWNER.to_string(),
+                astro_denom: "".to_string(),
+                transfer_channel: "".to_string(),
+                main_controller: CONTROLLER.to_string(),
+                main_maker: "".to_string(),
+                timeout: 0,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(ContractError::TimeoutLimitsError {}, err);
+
         instantiate(
             deps,
             env,
@@ -207,7 +229,7 @@ mod tests {
                 transfer_channel: "".to_string(),
                 main_controller: CONTROLLER.to_string(),
                 main_maker: "".to_string(),
-                timeout: 0,
+                timeout: 60,
             },
         )
         .unwrap();
@@ -262,7 +284,7 @@ mod tests {
             ExecuteMsg::UpdateConfig(UpdateConfigMsg {
                 astro_denom: None,
                 gov_channel: Some(GOV_CHANNEL.to_string()),
-                main_controller_port: None,
+                main_controller_addr: None,
                 main_maker: None,
                 transfer_channel: None,
                 timeout: None,
@@ -310,7 +332,7 @@ mod tests {
             ExecuteMsg::UpdateConfig(UpdateConfigMsg {
                 astro_denom: None,
                 gov_channel: Some(GOV_CHANNEL.to_string()),
-                main_controller_port: None,
+                main_controller_addr: None,
                 main_maker: None,
                 transfer_channel: None,
                 timeout: None,
@@ -333,12 +355,11 @@ mod tests {
 
         let ibc_proposal = IbcProposal {
             id: 1,
-            messages: vec![ProposalMessage {
-                order: 1u64.into(),
+            messages: vec![
                 // pass any valid CosmosMsg message.
                 // The meaning of this msg doesn't matter as this is just a unit test
-                msg: CosmosMsg::Custom(Empty {}),
-            }],
+                CosmosMsg::Custom(Empty {}),
+            ],
         };
         // Send messages via governance channel
         let msg = mock_ibc_packet_recv(GOV_CHANNEL, &ibc_proposal).unwrap();

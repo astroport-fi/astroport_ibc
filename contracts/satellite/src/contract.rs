@@ -4,19 +4,17 @@ use cosmwasm_std::{
     to_binary, wasm_execute, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout,
     MessageInfo, Reply, Response, StdError,
 };
-use cw2::set_contract_version;
+use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
-use itertools::Itertools;
 
-use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
-use astro_satellite_package::astroport_governance::astroport::asset::addr_validate_to_lower;
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use astroport_ibc::TIMEOUT_LIMITS;
 
 use crate::error::ContractError;
-use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
+use crate::state::{store_proposal, Config, CONFIG, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -32,10 +30,14 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    if !TIMEOUT_LIMITS.contains(&msg.timeout) {
+        return Err(ContractError::TimeoutLimitsError {});
+    }
+
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, &msg.owner)?,
+            owner: deps.api.addr_validate(&msg.owner)?,
             astro_denom: msg.astro_denom,
             main_controller_port: format!("wasm.{}", msg.main_controller),
             main_maker: msg.main_maker,
@@ -53,7 +55,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     let proposal_id = REPLY_DATA.load(deps.storage)?;
     match reply.id {
         RECEIVE_ID => {
-            RESULTS.save(deps.storage, proposal_id, &env.block.height)?;
+            store_proposal(deps, env, proposal_id)?;
             Ok(Response::new())
         }
         _ => Err(ContractError::InvalidReplyId {}),
@@ -87,7 +89,7 @@ pub fn execute(
         ExecuteMsg::UpdateConfig(params) => {
             CONFIG.update(deps.storage, |mut config| {
                 if config.owner == info.sender {
-                    config.update(params);
+                    config.update(params)?;
                     Ok(config)
                 } else {
                     Err(ContractError::Unauthorized {})
@@ -131,12 +133,7 @@ pub fn execute(
     }
 }
 
-fn check_messages(env: Env, messages: Vec<ProposalMessage>) -> Result<Response, ContractError> {
-    let mut messages: Vec<_> = messages
-        .into_iter()
-        .sorted_by(|a, b| a.order.cmp(&b.order))
-        .map(|message| message.msg)
-        .collect();
+fn check_messages(env: Env, mut messages: Vec<CosmosMsg>) -> Result<Response, ContractError> {
     messages.push(CosmosMsg::Wasm(wasm_execute(
         env.contract.address,
         &ExecuteMsg::CheckMessagesPassed {},
@@ -159,6 +156,22 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let contract_version = get_contract_version(deps.storage)?;
+
+    match contract_version.contract.as_ref() {
+        "astro-satellite" => match contract_version.version.as_ref() {
+            "0.1.0" => {}
+            _ => return Err(ContractError::MigrationError {}),
+        },
+        _ => return Err(ContractError::MigrationError {}),
+    };
+
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    Ok(Response::new()
+        .add_attribute("previous_contract_name", &contract_version.contract)
+        .add_attribute("previous_contract_version", &contract_version.version)
+        .add_attribute("new_contract_name", CONTRACT_NAME)
+        .add_attribute("new_contract_version", CONTRACT_VERSION))
 }
