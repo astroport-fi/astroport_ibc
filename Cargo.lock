@@ -71,7 +71,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.2.0"
-source = "git+https://github.com/astroport-fi/astroport-governance?branch=release#a707945bd5c271c6a4dfc2a21a563e902376ce83"
+source = "git+https://github.com/astroport-fi/astroport-governance.git?branch=release#a707945bd5c271c6a4dfc2a21a563e902376ce83"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
