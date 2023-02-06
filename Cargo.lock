@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "astroport"
 version = "2.1.0"
-source = "git+https://github.com/astroport-fi/astroport-core.git?branch=fix/sync_deps#72546b026d5cd4ba2998aecb8b09a826773f9225"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=release#2144edd667f9686b5118c1132f416585e9cb99fc"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -71,7 +71,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.2.0"
-source = "git+https://github.com/astroport-fi/astroport-governance?branch=feat/fix_deps#6664643de147e13d6cf94f2951f46e613c570f7c"
+source = "git+https://github.com/astroport-fi/astroport-governance?branch=release#a707945bd5c271c6a4dfc2a21a563e902376ce83"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
