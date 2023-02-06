@@ -15,9 +15,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.68"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
+checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 
 [[package]]
 name = "astro-satellite"
@@ -49,13 +49,14 @@ dependencies = [
 [[package]]
 name = "astroport"
 version = "2.1.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_core.git?branch=release#77cad13c6d2c86cbe034137a5ec78d667f9e5ecb"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=fix/sync_deps#a6a79852bcf37c6eca8309e6b195c88f023831c2"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
  "cw20",
+ "itertools",
  "uint",
 ]
 
@@ -70,7 +71,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.2.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=release#d74d72cc42134e57742d4dde33d7cec4c1612a24"
+source = "git+https://github.com/astroport-fi/astroport-governance?branch=feat/fix_deps#bc573c4780a571606ff7f0985a7de83f979830b8"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
@@ -630,9 +631,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.50"
+version = "1.0.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ef7d57beacfaf2d8aee5937dab7b7f28de3cb8b1828479bb5de2a7106f2bae2"
+checksum = "5d727cae5b39d21da60fa540906919ad737832fe0b1c165da3a34d6548c849d6"
 dependencies = [
  "unicode-ident",
 ]
@@ -787,9 +788,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.91"
+version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "877c235533714907a8c2464236f5c4b2a17262ef1bd71f38f35ea592c8da6883"
+checksum = "7434af0dc1cbd59268aa98b4c22c131c0584d2232f6fb166efb993e2832e896a"
 dependencies = [
  "itoa",
  "ryu",
