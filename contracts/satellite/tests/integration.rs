@@ -1,9 +1,12 @@
 use astro_satellite::contract::{execute, instantiate, query, reply};
 use astro_satellite::error::ContractError;
-use astro_satellite_package::{ExecuteMsg, InstantiateMsg};
+use astro_satellite::state::Config;
+use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
 use cosmwasm_std::{
-    wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    from_slice, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
+    StdResult,
 };
+
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 
 fn mock_app(owner: &Addr, coins: Vec<Coin>) -> App {
@@ -105,5 +108,89 @@ fn test_check_messages() {
     assert_eq!(
         ContractError::MessagesCheckPassed {},
         err.downcast().unwrap()
+    );
+}
+
+#[test]
+fn test_check_update_configs() {
+    let owner = Addr::unchecked("owner");
+    let mut app = mock_app(&owner, vec![]);
+
+    let satellite_code = app.store_code(satellite_contract());
+    let satellite_addr = app
+        .instantiate_contract(
+            satellite_code,
+            owner.clone(),
+            &InstantiateMsg {
+                owner: owner.to_string(),
+                astro_denom: "none".to_string(),
+                transfer_channel: "none".to_string(),
+                main_controller: "none".to_string(),
+                main_maker: "none".to_string(),
+                timeout: 60,
+            },
+            &[],
+            "Satellite label",
+            None,
+        )
+        .unwrap();
+
+    app.execute_contract(
+        owner.clone(),
+        satellite_addr.clone(),
+        &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+            astro_denom: None,
+            gov_channel: None,
+            main_controller_addr: Some(Addr::unchecked("controller_addr_test").to_string()),
+            main_maker: None,
+            transfer_channel: None,
+            accept_new_connections: None,
+            timeout: None,
+        }),
+        &[],
     )
+    .unwrap();
+
+    if let Some(res) = app
+        .wrap()
+        .query_wasm_raw(satellite_addr.clone(), b"config".as_slice())
+        .unwrap()
+    {
+        let res: Config = from_slice(&res).unwrap();
+        assert_eq!("wasm.controller_addr_test", res.main_controller_port);
+    }
+
+    let err = app
+        .execute_contract(
+            owner.clone(),
+            satellite_addr.clone(),
+            &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+                astro_denom: None,
+                gov_channel: Some(Addr::unchecked("controller_addr_test").to_string()),
+                main_controller_addr: None,
+                main_maker: None,
+                transfer_channel: None,
+                accept_new_connections: Some(true),
+                timeout: None,
+            }),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!("The gov_channel and the accept_new_connections settings cannot be specified at the same time", err.root_cause().to_string());
+
+    app.execute_contract(
+        owner.clone(),
+        satellite_addr.clone(),
+        &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+            astro_denom: None,
+            gov_channel: Some(Addr::unchecked("controller_addr_test").to_string()),
+            main_controller_addr: None,
+            main_maker: None,
+            transfer_channel: None,
+            accept_new_connections: Some(false),
+            timeout: None,
+        }),
+        &[],
+    )
+    .unwrap();
 }
