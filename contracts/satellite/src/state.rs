@@ -31,7 +31,10 @@ impl Config {
             self.astro_denom = astro_denom;
         }
 
-        if params.gov_channel.is_some() && params.accept_new_connections.is_some() {
+        if params.gov_channel.is_some()
+            && params.accept_new_connections.is_some()
+            && params.accept_new_connections.unwrap()
+        {
             return Err(ContractError::UpdateChannelError {});
         }
 
@@ -46,7 +49,7 @@ impl Config {
         }
 
         if let Some(main_controller_addr) = params.main_controller_addr {
-            self.main_controller_port = format!("wasm.{}", main_controller_addr);
+            self.main_controller_port = format!("wasm.{main_controller_addr}");
         }
 
         if let Some(main_maker) = params.main_maker {
