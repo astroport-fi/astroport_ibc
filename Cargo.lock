@@ -22,7 +22,7 @@ checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 [[package]]
 name = "ap-native-coin-registry"
 version = "1.0.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_core.git#d1945156ed0c0c853f913be1f069b7820f50aa60"
+source = "git+https://github.com/astroport-fi/hidden_astroport_core.git?branch=feat/extended_maker#819e5be024316a38e3d975469ea0aa0ff9d441bc"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -58,7 +58,7 @@ dependencies = [
 [[package]]
 name = "astroport"
 version = "2.1.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_core.git#d1945156ed0c0c853f913be1f069b7820f50aa60"
+source = "git+https://github.com/astroport-fi/hidden_astroport_core.git?branch=feat/extended_maker#819e5be024316a38e3d975469ea0aa0ff9d441bc"
 dependencies = [
  "ap-native-coin-registry",
  "cosmwasm-schema",
@@ -81,7 +81,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.2.0"
-source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/refactor_code_main#b5adc2e7a97b4304441f983f0e8bf505f1c10c77"
+source = "git+https://github.com/astroport-fi/hidden_astroport_governance.git?branch=feat/refactor_code_main#0b4fedcf951dafcfea226886e67fde243ee854bf"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
