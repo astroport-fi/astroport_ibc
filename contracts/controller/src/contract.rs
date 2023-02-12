@@ -8,7 +8,6 @@ use cw2::set_contract_version;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
 use astro_satellite_package::QueryMsg;
-use ibc_controller_package::astroport_governance::astroport::asset::addr_validate_to_lower;
 use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
@@ -31,8 +30,8 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, &msg.owner)?,
-            assembly: addr_validate_to_lower(deps.api, &msg.assembly)?,
+            owner: deps.api.addr_validate(msg.owner.as_str())?,
+            assembly: deps.api.addr_validate(msg.assembly.as_str())?,
             timeout: msg.timeout,
         },
     )?;
@@ -76,7 +75,7 @@ pub fn execute(
         ExecuteMsg::UpdateConfig { new_assembly } => CONFIG
             .update(deps.storage, |mut config| {
                 if info.sender == config.owner {
-                    config.assembly = addr_validate_to_lower(deps.api, &new_assembly)?;
+                    config.assembly = deps.api.addr_validate(new_assembly.as_str())?;
                     Ok(config)
                 } else {
                     Err(ContractError::Unauthorized {})

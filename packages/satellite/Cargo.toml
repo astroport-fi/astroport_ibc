@@ -9,6 +9,6 @@ homepage = "https://astroport.fi"
 edition = "2021"
 
 [dependencies]
-astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git" }
+astroport-governance = { git = "https://github.com/astroport-fi/hidden_astroport_governance.git",  branch = "feat/refactor_code_main" }
 cosmwasm-std = "1.1"
 cosmwasm-schema = "1.1"

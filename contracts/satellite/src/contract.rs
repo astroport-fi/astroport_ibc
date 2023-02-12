@@ -9,7 +9,6 @@ use cw_utils::must_pay;
 use itertools::Itertools;
 
 use astro_satellite_package::astroport_governance::assembly::ProposalMessage;
-use astro_satellite_package::astroport_governance::astroport::asset::addr_validate_to_lower;
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
@@ -35,7 +34,7 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, msg.owner)?,
+            owner: deps.api.addr_validate(msg.owner.as_str())?,
             astro_denom: msg.astro_denom,
             main_controller_port: format!("wasm.{}", msg.main_controller),
             main_maker: msg.main_maker,
