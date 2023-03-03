@@ -6,8 +6,14 @@ use cosmwasm_std::{
 };
 
 use astro_satellite_package::IbcAckResult;
-use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+// TODO: uncomment the following use and remove its replacement after it
+// use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+use astroport_ibc::ProposalStatus;
+
 use ibc_controller_package::IbcProposal;
+// TODO: uncomment the following use and remove its replacement after it
+// use ibc_controller_package::astroport_governance::assembly::ExecuteMsg as AssemblyExecuteMsg;
+use astroport_ibc::AssemblyExecuteMsg;
 
 use crate::state::{CONFIG, LAST_ERROR, PROPOSAL_STATE};
 
@@ -29,7 +35,7 @@ pub fn ibc_channel_open(
     }
     if channel.version != IBC_APP_VERSION {
         return Err(StdError::generic_err(format!(
-            "Must set version to `{IBC_APP_VERSION}`"
+            "Must set version to `{IBC_APP_VERSION}`",
         )));
     }
 
@@ -53,6 +59,15 @@ pub fn ibc_channel_connect(
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
+
+    if let Some(counter_version) = msg.counterparty_version() {
+        if counter_version != IBC_APP_VERSION {
+            return Err(StdError::generic_err(format!(
+                "Counterparty version must be `{IBC_APP_VERSION}`"
+            )));
+        }
+    }
+
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_connect")
         .add_attribute("channel_id", &channel.endpoint.channel_id))
@@ -74,7 +89,7 @@ fn confirm_assembly(
 ) -> StdResult<SubMsg> {
     Ok(SubMsg::new(wasm_execute(
         assembly,
-        &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
+        &AssemblyExecuteMsg::IBCProposalCompleted {
             proposal_id,
             status,
         },
@@ -109,7 +124,7 @@ pub fn ibc_packet_timeout(
 
     Ok(IbcBasicResponse::new()
         .add_submessage(confirm_assembly(
-            &config.assembly,
+            &config.owner,
             ibc_proposal.id,
             new_status,
         )?)
@@ -153,7 +168,7 @@ pub fn ibc_packet_ack(
 
     Ok(IbcBasicResponse::new()
         .add_submessage(confirm_assembly(
-            &config.assembly,
+            &config.owner,
             ibc_proposal.id,
             new_status,
         )?)
@@ -224,12 +239,10 @@ mod tests {
         assert_eq!(state, ProposalStatus::Executed);
 
         assert_eq!(resp.messages.len(), 1);
-        let valid_msg = to_binary(
-            &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
-                proposal_id,
-                status: ProposalStatus::Executed,
-            },
-        )
+        let valid_msg = to_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
+            proposal_id,
+            status: ProposalStatus::Executed,
+        })
         .unwrap();
         assert!(matches!(
             &resp.messages[0],
@@ -264,12 +277,10 @@ mod tests {
         assert_eq!(state, ProposalStatus::Failed);
 
         assert_eq!(resp.messages.len(), 1);
-        let valid_msg = to_binary(
-            &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
-                proposal_id,
-                status: ProposalStatus::Failed,
-            },
-        )
+        let valid_msg = to_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
+            proposal_id,
+            status: ProposalStatus::Failed,
+        })
         .unwrap();
         assert!(matches!(
             &resp.messages[0],
@@ -333,12 +344,10 @@ mod tests {
         assert_eq!(state, ProposalStatus::Failed);
 
         assert_eq!(resp.messages.len(), 1);
-        let valid_msg = to_binary(
-            &ibc_controller_package::astroport_governance::assembly::ExecuteMsg::IBCProposalCompleted {
-                proposal_id,
-                status: ProposalStatus::Failed,
-            },
-        )
+        let valid_msg = to_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
+            proposal_id,
+            status: ProposalStatus::Failed,
+        })
         .unwrap();
         assert!(matches!(
             &resp.messages[0],

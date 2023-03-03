@@ -1,3 +1,4 @@
+use astroport_ibc::TIMEOUT_LIMITS;
 use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -10,6 +11,9 @@ pub enum Never {}
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
+
+    #[error("Contract can't be migrated!")]
+    MigrationError {},
 
     #[error("Unauthorized")]
     Unauthorized {},
@@ -34,4 +38,14 @@ pub enum ContractError {
 
     #[error("Messages check passed. Nothing was committed to the blockchain")]
     MessagesCheckPassed {},
+
+    #[error("The gov_channel and the accept_new_connections settings cannot be specified at the same time")]
+    UpdateChannelError {},
+
+    #[error(
+        "Timeout must be within limits ({0} <= timeout <= {1})",
+        TIMEOUT_LIMITS.start(),
+        TIMEOUT_LIMITS.end()
+    )]
+    TimeoutLimitsError {},
 }

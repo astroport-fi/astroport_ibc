@@ -1,16 +1,16 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-use cosmwasm_schema::cw_serde;
-use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+// TODO: uncomment the following use and remove its replacement after it
+// use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+use astroport_ibc::ProposalStatus;
 use ibc_controller_package::astroport_governance::astroport::common::OwnershipProposal;
 
 #[cw_serde]
 pub struct Config {
-    /// Address that's allowed to change contract parameters
+    /// Address which is able to run IBC proposals
     pub owner: Addr,
-    /// Assembly address
-    pub assembly: Addr,
     /// when packet times out, measured on remote chain
     pub timeout: u64,
 }

@@ -1,20 +1,24 @@
+use astroport_ibc::TIMEOUT_LIMITS;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
     Response, StdError,
 };
-use cw2::set_contract_version;
-use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+use cw2::{get_contract_version, set_contract_version};
+// TODO: uncomment the following use and remove its replacement after it
+// use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
+use astroport_ibc::ProposalStatus;
 
-use astro_satellite_package::QueryMsg;
 use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
+use ibc_controller_package::QueryMsg;
 use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
 
 use crate::error::ContractError;
-use crate::state::{Config, CONFIG, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
+use crate::migration::migrate_config;
+use crate::state::{Config, CONFIG, LAST_ERROR, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -27,11 +31,15 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if !TIMEOUT_LIMITS.contains(&msg.timeout) {
+        return Err(ContractError::TimeoutLimitsError {});
+    }
+
     CONFIG.save(
         deps.storage,
         &Config {
-            owner: deps.api.addr_validate(msg.owner.as_str())?,
-            assembly: deps.api.addr_validate(msg.assembly.as_str())?,
+            owner: deps.api.addr_validate(&msg.owner)?,
             timeout: msg.timeout,
         },
     )?;
@@ -57,6 +65,10 @@ pub fn execute(
                 return Err(ContractError::Unauthorized {});
             }
 
+            if PROPOSAL_STATE.has(deps.storage, proposal_id) {
+                return Err(ContractError::ProposalAlreadyExists { proposal_id });
+            }
+
             let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id: channel_id.clone(),
                 data: to_binary(&IbcProposal {
@@ -72,16 +84,6 @@ pub fn execute(
                 .add_attribute("action", "ibc_execute")
                 .add_attribute("channel", channel_id))
         }
-        ExecuteMsg::UpdateConfig { new_assembly } => CONFIG
-            .update(deps.storage, |mut config| {
-                if info.sender == config.owner {
-                    config.assembly = deps.api.addr_validate(new_assembly.as_str())?;
-                    Ok(config)
-                } else {
-                    Err(ContractError::Unauthorized {})
-                }
-            })
-            .map(|_| Response::new().add_attribute("action", "update_config")),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => propose_new_owner(
             deps,
             info,
@@ -117,22 +119,37 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
             let state = PROPOSAL_STATE.load(deps.storage, id)?;
             Ok(to_binary(&state)?)
         }
+        QueryMsg::LastError {} => Ok(to_binary(&LAST_ERROR.load(deps.storage)?)?),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(mut deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let contract_version = get_contract_version(deps.storage)?;
+
+    match contract_version.contract.as_ref() {
+        "ibc-controller" => match contract_version.version.as_ref() {
+            "0.1.0" => migrate_config(&mut deps)?,
+            _ => return Err(ContractError::MigrationError {}),
+        },
+        _ => return Err(ContractError::MigrationError {}),
+    };
+
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    Ok(Response::new()
+        .add_attribute("previous_contract_name", &contract_version.contract)
+        .add_attribute("previous_contract_version", &contract_version.version)
+        .add_attribute("new_contract_name", CONTRACT_NAME)
+        .add_attribute("new_contract_version", CONTRACT_VERSION))
 }
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128, Uint64};
-
-    use crate::test_utils::{init_contract, mock_all, OWNER};
-    use ibc_controller_package::astroport_governance::assembly::ProposalMessage;
+    use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128};
 
     use super::*;
+    use crate::test_utils::{init_contract, mock_all, OWNER};
 
     #[test]
     fn test_ibc_execute() {
@@ -142,16 +159,13 @@ mod tests {
 
         let channel_id = "channel-0".to_string();
         let proposal_id = 1;
-        let proposal_msg = ProposalMessage {
-            order: Uint64::new(1),
-            msg: CosmosMsg::Bank(BankMsg::Send {
-                to_address: "foreign_addr".to_string(),
-                amount: vec![Coin {
-                    denom: "stake".to_string(),
-                    amount: Uint128::new(100),
-                }],
-            }),
-        };
+        let proposal_msg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: "foreign_addr".to_string(),
+            amount: vec![Coin {
+                denom: "stake".to_string(),
+                amount: Uint128::new(100),
+            }],
+        });
         let msg = ExecuteMsg::IbcExecuteProposal {
             channel_id,
             proposal_id,
