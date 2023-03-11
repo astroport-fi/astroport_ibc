@@ -22,7 +22,7 @@ checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 [[package]]
 name = "ap-native-coin-registry"
 version = "1.0.0"
-source = "git+https://github.com/astroport-fi/astroport-core.git#6da1b4765e29c64deaffd18db2da6110176efe04"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=merge/release#b9f30fb2f27352efae78213256d02da9b355b94c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -58,8 +58,8 @@ dependencies = [
 
 [[package]]
 name = "astroport"
-version = "2.1.0"
-source = "git+https://github.com/astroport-fi/astroport-core.git#6da1b4765e29c64deaffd18db2da6110176efe04"
+version = "2.4.0"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=merge/release#b9f30fb2f27352efae78213256d02da9b355b94c"
 dependencies = [
  "ap-native-coin-registry",
  "cosmwasm-schema",
@@ -81,8 +81,8 @@ dependencies = [
 
 [[package]]
 name = "astroport-governance"
-version = "1.1.0"
-source = "git+https://github.com/astroport-fi/astroport-governance.git?branch=main#effbe8ec32a165810ac773791ab7f87be6438a40"
+version = "1.2.0"
+source = "git+https://github.com/astroport-fi/astroport-governance.git?branch=merge/release#fd67f761f1fc962d2caa54beccc027785b5e21db"
 dependencies = [
  "astroport",
  "cosmwasm-schema",

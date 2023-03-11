@@ -6,9 +6,7 @@ use cosmwasm_std::{
     Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
-// TODO: uncomment the following use and remove its replacement after it
-// use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
-use astroport_ibc::ProposalStatus;
+use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
 use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,

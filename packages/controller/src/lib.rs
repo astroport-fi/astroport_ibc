@@ -1,6 +1,4 @@
-// TODO: uncomment the following use and remove its replacement after it
-// use astroport_governance::assembly::ProposalStatus;
-use astroport_ibc::ProposalStatus;
+use astroport_governance::assembly::ProposalStatus;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]

@@ -6,14 +6,10 @@ use cosmwasm_std::{
 };
 
 use astro_satellite_package::IbcAckResult;
-// TODO: uncomment the following use and remove its replacement after it
-// use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
-use astroport_ibc::ProposalStatus;
+use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
+use ibc_controller_package::astroport_governance::assembly::ExecuteMsg as AssemblyExecuteMsg;
 use ibc_controller_package::IbcProposal;
-// TODO: uncomment the following use and remove its replacement after it
-// use ibc_controller_package::astroport_governance::assembly::ExecuteMsg as AssemblyExecuteMsg;
-use astroport_ibc::AssemblyExecuteMsg;
 
 use crate::state::{CONFIG, LAST_ERROR, PROPOSAL_STATE};
 

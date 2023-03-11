@@ -2,9 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-// TODO: uncomment the following use and remove its replacement after it
-// use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
-use astroport_ibc::ProposalStatus;
+use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 use ibc_controller_package::astroport_governance::astroport::common::OwnershipProposal;
 
 #[cw_serde]
