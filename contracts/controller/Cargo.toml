@@ -1,6 +1,6 @@
 [package]
 name = "ibc-controller"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Astroport"]
 license = "Apache-2.0"
 description = "IBC controller contract intended to be hosted on the main chain."
@@ -22,9 +22,10 @@ cosmwasm-std = { version = "1.1", features = ["ibc3"] }
 cosmwasm-storage = "1.1"
 cw-storage-plus = "0.15"
 cw2 = "0.15"
-thiserror = { version = "1.0" }
+thiserror = "1.0"
 ibc-controller-package = { path = "../../packages/controller" }
 astro-satellite-package = { path = "../../packages/satellite" }
+astroport-ibc = { path = "../../packages/astroport-ibc" }
 cosmwasm-schema = "1.1"
 
 [dev-dependencies]
