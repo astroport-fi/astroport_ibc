@@ -148,7 +148,7 @@ pub fn migrate(mut deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response
             "0.2.0" => {
                 let new_timeout = msg
                     .new_timeout
-                    .ok_or(StdError::generic_err("Missing new_timeout field"))?;
+                    .ok_or_else(|| StdError::generic_err("Missing new_timeout field"))?;
 
                 if !TIMEOUT_LIMITS.contains(&new_timeout) {
                     return Err(ContractError::TimeoutLimitsError {});
