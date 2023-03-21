@@ -1,3 +1,3 @@
 use std::ops::RangeInclusive;
 
-pub const TIMEOUT_LIMITS: RangeInclusive<u64> = 60..=600;
+pub const TIMEOUT_LIMITS: RangeInclusive<u64> = 60..=43200;

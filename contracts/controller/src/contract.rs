@@ -2,8 +2,8 @@ use astroport_ibc::TIMEOUT_LIMITS;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Response, StdError,
+    to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Response,
+    StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
@@ -11,8 +11,8 @@ use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use ibc_controller_package::QueryMsg;
 use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
+use ibc_controller_package::{MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::migration::migrate_config;
@@ -82,6 +82,23 @@ pub fn execute(
                 .add_attribute("action", "ibc_execute")
                 .add_attribute("channel", channel_id))
         }
+        ExecuteMsg::UpdateTimeout { new_timeout } => {
+            if config.owner != info.sender {
+                return Err(ContractError::Unauthorized {});
+            }
+            if !TIMEOUT_LIMITS.contains(&new_timeout) {
+                return Err(ContractError::TimeoutLimitsError {});
+            }
+
+            CONFIG.update::<_, StdError>(deps.storage, |mut config| {
+                config.timeout = new_timeout;
+                Ok(config)
+            })?;
+
+            Ok(Response::new()
+                .add_attribute("action", "update_timeout")
+                .add_attribute("timeout", new_timeout.to_string()))
+        }
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => propose_new_owner(
             deps,
             info,
@@ -122,12 +139,26 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(mut deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn migrate(mut deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
         "ibc-controller" => match contract_version.version.as_ref() {
             "0.1.0" => migrate_config(&mut deps)?,
+            "0.2.0" => {
+                let new_timeout = msg
+                    .new_timeout
+                    .ok_or_else(|| StdError::generic_err("Missing new_timeout field"))?;
+
+                if !TIMEOUT_LIMITS.contains(&new_timeout) {
+                    return Err(ContractError::TimeoutLimitsError {});
+                }
+
+                CONFIG.update::<_, StdError>(deps.storage, |mut config| {
+                    config.timeout = new_timeout;
+                    Ok(config)
+                })?;
+            }
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
