@@ -563,7 +563,7 @@ dependencies = [
 
 [[package]]
 name = "ibc-controller"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "astro-satellite-package",
  "astroport-ibc",

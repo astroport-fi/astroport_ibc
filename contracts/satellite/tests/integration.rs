@@ -7,6 +7,7 @@ use cosmwasm_std::{
     StdResult,
 };
 
+use astroport_ibc::TIMEOUT_LIMITS;
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 
 fn mock_app(owner: &Addr, coins: Vec<Coin>) -> App {
@@ -65,7 +66,11 @@ fn test_check_messages() {
         )
         .unwrap_err();
     assert_eq!(
-        "Timeout must be within limits (60 <= timeout <= 600)",
+        format!(
+            "Timeout must be within limits ({} <= timeout <= {})",
+            TIMEOUT_LIMITS.start(),
+            TIMEOUT_LIMITS.end()
+        ),
         err.root_cause().to_string()
     );
 

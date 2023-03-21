@@ -15,11 +15,14 @@ pub struct IbcProposal {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    /// Executes the IBC proposal that came from Assembly contract
     IbcExecuteProposal {
         channel_id: String,
         proposal_id: u64,
         messages: Vec<CosmosMsg>,
     },
+    /// Updates the timeout for the IBC channel
+    UpdateTimeout { new_timeout: u64 },
     /// Creates a request to change contract ownership
     /// ## Executor
     /// Only the current owner can execute this.
@@ -37,6 +40,11 @@ pub enum ExecuteMsg {
     /// ## Executor
     /// Only the newly proposed owner can execute this
     ClaimOwnership {},
+}
+
+#[cw_serde]
+pub struct MigrateMsg {
+    pub new_timeout: Option<u64>,
 }
 
 #[cw_serde]
