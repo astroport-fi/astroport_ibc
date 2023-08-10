@@ -1,14 +1,18 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use astro_satellite::contract::{execute, instantiate, query, reply};
 use astro_satellite::error::ContractError;
 use astro_satellite::state::Config;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
+use astroport_mocks::{astroport_address, MockSatelliteBuilder};
 use cosmwasm_std::{
     from_slice, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdResult,
+    StdResult, WasmMsg,
 };
 
-use astroport_ibc::TIMEOUT_LIMITS;
-use cw_multi_test::{App, Contract, ContractWrapper, Executor};
+use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
+use astroport_mocks::cw_multi_test::{App, BasicApp, Contract, ContractWrapper, Executor};
 
 fn mock_app(owner: &Addr, coins: Vec<Coin>) -> App {
     App::new(|router, _, storage| {
@@ -59,6 +63,8 @@ fn test_check_messages() {
                 main_controller: "none".to_string(),
                 main_maker: "none".to_string(),
                 timeout: 0,
+                max_signal_outage: 1209600,
+                emergency_owner: owner.to_string(),
             },
             &[],
             "Satellite label",
@@ -85,6 +91,8 @@ fn test_check_messages() {
                 main_controller: "none".to_string(),
                 main_maker: "none".to_string(),
                 timeout: 60,
+                max_signal_outage: 1209600,
+                emergency_owner: owner.to_string(),
             },
             &[],
             "Satellite label",
@@ -133,6 +141,8 @@ fn test_check_update_configs() {
                 main_controller: "none".to_string(),
                 main_maker: "none".to_string(),
                 timeout: 60,
+                max_signal_outage: 1209600,
+                emergency_owner: owner.to_string(),
             },
             &[],
             "Satellite label",
@@ -151,6 +161,8 @@ fn test_check_update_configs() {
             transfer_channel: None,
             accept_new_connections: None,
             timeout: None,
+            emergency_owner: None,
+            max_signal_outage: None,
         }),
         &[],
     )
@@ -177,6 +189,8 @@ fn test_check_update_configs() {
                 transfer_channel: None,
                 accept_new_connections: Some(true),
                 timeout: None,
+                max_signal_outage: None,
+                emergency_owner: None,
             }),
             &[],
         )
@@ -194,8 +208,68 @@ fn test_check_update_configs() {
             transfer_channel: None,
             accept_new_connections: Some(false),
             timeout: None,
+            max_signal_outage: None,
+            emergency_owner: None,
         }),
         &[],
     )
     .unwrap();
+}
+
+#[test]
+fn check_ownership_capabilities() {
+    let app = Rc::new(RefCell::new(BasicApp::default()));
+
+    let astroport = astroport_address();
+    let emergency_owner = Addr::unchecked("emergency_owner");
+    let another_user = Addr::unchecked("another_user");
+
+    let satellite = MockSatelliteBuilder::new(&app, &emergency_owner).instantiate();
+
+    // Setting the same emergency owner just to check the capability
+    assert!(satellite.update_emergency_owner(&astroport, &emergency_owner));
+
+    // As the owner may manage this contract, using this endpoint does not make sense
+    assert!(!satellite.update_admin(&astroport));
+
+    // Instead, we set the contract's admin to itself
+    app.borrow_mut()
+        .execute(
+            astroport.clone(),
+            WasmMsg::UpdateAdmin {
+                contract_addr: satellite.address.to_string(),
+                admin: satellite.address.to_string(),
+            }
+            .into(),
+        )
+        .unwrap();
+
+    // The emergency owner may not change any parameters nor contract admin until max signal outage
+    // is reached
+    assert!(!satellite.update_emergency_owner(&emergency_owner, &emergency_owner));
+    assert!(!satellite.update_admin(&emergency_owner));
+
+    // No one else, of course, may change anything
+    assert!(!satellite.update_emergency_owner(&another_user, &another_user));
+    assert!(!satellite.update_admin(&another_user));
+
+    // Let's check the same when signal outage is reached
+    app.borrow_mut().update_block(|b| {
+        b.time = b.time.plus_seconds(*SIGNAL_OUTAGE_LIMITS.start() + 1);
+        b.height += 1;
+    });
+
+    // The main owner still can change everything
+    assert!(satellite.update_emergency_owner(&astroport, &emergency_owner));
+
+    // Again, as the owner may manage this contract, using this endpoint does not make sense
+    assert!(!satellite.update_admin(&astroport));
+
+    // The emergency owner may change many parameters or contract admin now
+    assert!(satellite.update_emergency_owner(&emergency_owner, &emergency_owner));
+    assert!(satellite.update_admin(&emergency_owner));
+
+    // Again, no one else, of course, may change anything
+    assert!(!satellite.update_emergency_owner(&another_user, &another_user));
+    assert!(!satellite.update_admin(&another_user));
 }

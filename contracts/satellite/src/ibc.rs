@@ -7,12 +7,12 @@ use cosmwasm_std::{
     IbcReceiveResponse, ReplyOn, StdError, StdResult, SubMsg,
 };
 
-use astro_satellite_package::IbcAckResult;
+use astro_satellite_package::{IbcAckResult, SatelliteMsg};
 use ibc_controller_package::IbcProposal;
 
 use crate::contract::RECEIVE_ID;
 use crate::error::{ContractError, Never};
-use crate::state::{store_proposal, CONFIG, REPLY_DATA};
+use crate::state::{store_proposal, CONFIG, LATEST_HUB_SIGNAL_TIME, REPLY_DATA};
 
 pub const IBC_APP_VERSION: &str = "astroport-ibc-v1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -110,7 +110,7 @@ pub fn ibc_packet_receive(
 }
 
 fn do_packet_receive(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, ContractError> {
@@ -126,21 +126,38 @@ fn do_packet_receive(
         _ => {}
     }
 
-    let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
+    // TODO: Remove or_else and map_err method calls once the controller is upgraded to v1.0.0
+    // everywhere
+    let satellite_msg = from_binary(&msg.packet.data)
+        .or_else(|_| {
+            let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
+            Ok(SatelliteMsg::ExecuteProposal { id, messages })
+        })
+        .map_err(ContractError::Std)?;
+
     let mut response = IbcReceiveResponse::new()
         .add_attribute("action", "ibc_packet_receive")
         .set_ack(ack_ok());
-    if !messages.is_empty() {
-        let mut messages: Vec<_> = messages.into_iter().map(SubMsg::new).collect();
-        if let Some(last_msg) = messages.last_mut() {
-            last_msg.reply_on = ReplyOn::Success;
-            last_msg.id = RECEIVE_ID;
+
+    match satellite_msg {
+        SatelliteMsg::ExecuteProposal { id, messages } => {
+            if !messages.is_empty() {
+                let mut messages: Vec<_> = messages.into_iter().map(SubMsg::new).collect();
+                if let Some(last_msg) = messages.last_mut() {
+                    last_msg.reply_on = ReplyOn::Success;
+                    last_msg.id = RECEIVE_ID;
+                }
+                REPLY_DATA.save(deps.storage, &id)?;
+                response = response.add_submessages(messages)
+            } else {
+                store_proposal(deps.branch(), env.clone(), id)?;
+            }
         }
-        REPLY_DATA.save(deps.storage, &id)?;
-        response = response.add_submessages(messages)
-    } else {
-        store_proposal(deps, env, id)?;
+        SatelliteMsg::HeartBeat {} => {}
+        _ => response.acknowledgement = ack_fail("satellite_message_is_not_supported"),
     }
+    LATEST_HUB_SIGNAL_TIME.save(deps.storage, &env.block.time)?;
+
     Ok(response)
 }
 
@@ -211,6 +228,8 @@ mod tests {
                 main_controller: CONTROLLER.to_string(),
                 main_maker: "".to_string(),
                 timeout: 0,
+                max_signal_outage: 1209600,
+                emergency_owner: OWNER.to_string(),
             },
         )
         .unwrap_err();
@@ -227,6 +246,8 @@ mod tests {
                 main_controller: CONTROLLER.to_string(),
                 main_maker: "".to_string(),
                 timeout: 60,
+                max_signal_outage: 1209600,
+                emergency_owner: OWNER.to_string(),
             },
         )
         .unwrap();
@@ -286,6 +307,8 @@ mod tests {
                 transfer_channel: None,
                 timeout: None,
                 accept_new_connections: None,
+                max_signal_outage: None,
+                emergency_owner: None,
             }),
         )
         .unwrap();
@@ -334,6 +357,8 @@ mod tests {
                 transfer_channel: None,
                 timeout: None,
                 accept_new_connections: None,
+                max_signal_outage: None,
+                emergency_owner: None,
             }),
         )
         .unwrap();
