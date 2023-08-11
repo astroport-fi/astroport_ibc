@@ -153,7 +153,7 @@ fn do_packet_receive(
                 store_proposal(deps.branch(), env.clone(), id)?;
             }
         }
-        SatelliteMsg::HeartBeat {} => {}
+        SatelliteMsg::Heartbeat {} => {}
         _ => response.acknowledgement = ack_fail("satellite_message_is_not_supported"),
     }
     LATEST_HUB_SIGNAL_TIME.save(deps.storage, &env.block.time)?;

@@ -129,7 +129,7 @@ pub fn execute(
             for channel in channels {
                 let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                     channel_id: channel.clone(),
-                    data: to_binary(&SatelliteMsg::HeartBeat {})?,
+                    data: to_binary(&SatelliteMsg::Heartbeat {})?,
                     timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
                 });
                 res.messages.push(SubMsg::new(ibc_msg));

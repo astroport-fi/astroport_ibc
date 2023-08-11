@@ -66,7 +66,7 @@ pub enum ExecuteMsg {
 #[non_exhaustive]
 pub enum SatelliteMsg {
     ExecuteProposal { id: u64, messages: Vec<CosmosMsg> },
-    HeartBeat {},
+    Heartbeat {},
 }
 
 #[cw_serde]
