@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Deps, DepsMut, Env, StdResult, Timestamp};
+use cosmwasm_std::{Addr, Api, DepsMut, Env, StdResult, Timestamp};
 use cw_storage_plus::{Item, Map};
 
 use crate::error::ContractError;
@@ -32,7 +32,7 @@ pub struct Config {
 impl Config {
     pub(crate) fn update(
         &mut self,
-        deps: Deps,
+        api: &dyn Api,
         params: UpdateConfigMsg,
     ) -> Result<(), ContractError> {
         if let Some(astro_denom) = params.astro_denom {
@@ -82,7 +82,7 @@ impl Config {
         }
 
         if let Some(emergency_owner) = params.emergency_owner {
-            self.emergency_owner = deps.api.addr_validate(&emergency_owner)?;
+            self.emergency_owner = api.addr_validate(&emergency_owner)?;
         }
 
         Ok(())

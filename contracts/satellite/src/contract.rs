@@ -108,7 +108,7 @@ pub fn execute(
             {
                 return Err(ContractError::Unauthorized {});
             }
-            config.update(deps.as_ref(), params)?;
+            config.update(deps.api, params)?;
             CONFIG.save(deps.storage, &config)?;
 
             Ok(Response::new().add_attribute("action", "update_config"))

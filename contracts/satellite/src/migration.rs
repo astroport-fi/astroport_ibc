@@ -1,4 +1,5 @@
 use astro_satellite_package::MigrateMsg;
+use astroport_ibc::SIGNAL_OUTAGE_LIMITS;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, DepsMut, Env};
 use cw_storage_plus::Item;
@@ -29,6 +30,10 @@ pub const CONFIGV020: Item<ConfigV020> = Item::new("config");
 
 pub fn migrate_to_v100(deps: DepsMut, env: &Env, msg: &MigrateMsg) -> Result<(), ContractError> {
     let old_config = CONFIGV020.load(deps.storage)?;
+
+    if !SIGNAL_OUTAGE_LIMITS.contains(&msg.max_signal_outage) {
+        return Err(ContractError::SignalOutageLimitsError {});
+    }
 
     let config = Config {
         timeout: old_config.timeout,

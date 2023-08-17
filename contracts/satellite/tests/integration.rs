@@ -12,7 +12,10 @@ use cosmwasm_std::{
 };
 
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
-use astroport_mocks::cw_multi_test::{App, BasicApp, Contract, ContractWrapper, Executor};
+use astroport_mocks::{
+    anyhow::Result as AnyResult,
+    cw_multi_test::{App, AppResponse, BasicApp, Contract, ContractWrapper, Executor},
+};
 
 fn mock_app(owner: &Addr, coins: Vec<Coin>) -> App {
     App::new(|router, _, storage| {
@@ -227,10 +230,12 @@ fn check_ownership_capabilities() {
     let satellite = MockSatelliteBuilder::new(&app, &emergency_owner).instantiate();
 
     // Setting the same emergency owner just to check the capability
-    assert!(satellite.update_emergency_owner(&astroport, &emergency_owner));
+    satellite
+        .update_emergency_owner(&astroport, &emergency_owner)
+        .unwrap();
 
     // As the owner may manage this contract, using this endpoint does not make sense
-    assert!(!satellite.update_admin(&astroport));
+    assert_unauthorized(satellite.update_admin(&astroport));
 
     // Instead, we set the contract's admin to itself
     app.borrow_mut()
@@ -246,12 +251,12 @@ fn check_ownership_capabilities() {
 
     // The emergency owner may not change any parameters nor contract admin until max signal outage
     // is reached
-    assert!(!satellite.update_emergency_owner(&emergency_owner, &emergency_owner));
-    assert!(!satellite.update_admin(&emergency_owner));
+    assert_unauthorized(satellite.update_emergency_owner(&emergency_owner, &emergency_owner));
+    assert_unauthorized(satellite.update_admin(&emergency_owner));
 
     // No one else, of course, may change anything
-    assert!(!satellite.update_emergency_owner(&another_user, &another_user));
-    assert!(!satellite.update_admin(&another_user));
+    assert_unauthorized(satellite.update_emergency_owner(&another_user, &another_user));
+    assert_unauthorized(satellite.update_admin(&another_user));
 
     // Let's check the same when signal outage is reached
     app.borrow_mut().update_block(|b| {
@@ -260,16 +265,27 @@ fn check_ownership_capabilities() {
     });
 
     // The main owner still can change everything
-    assert!(satellite.update_emergency_owner(&astroport, &emergency_owner));
+    satellite
+        .update_emergency_owner(&astroport, &emergency_owner)
+        .unwrap();
 
     // Again, as the owner may manage this contract, using this endpoint does not make sense
-    assert!(!satellite.update_admin(&astroport));
+    assert_unauthorized(satellite.update_admin(&astroport));
 
     // The emergency owner may change many parameters or contract admin now
-    assert!(satellite.update_emergency_owner(&emergency_owner, &emergency_owner));
-    assert!(satellite.update_admin(&emergency_owner));
+    satellite
+        .update_emergency_owner(&emergency_owner, &emergency_owner)
+        .unwrap();
+    satellite.update_admin(&emergency_owner).unwrap();
 
     // Again, no one else, of course, may change anything
-    assert!(!satellite.update_emergency_owner(&another_user, &another_user));
-    assert!(!satellite.update_admin(&another_user));
+    assert_unauthorized(satellite.update_emergency_owner(&another_user, &another_user));
+    assert_unauthorized(satellite.update_admin(&another_user));
+}
+
+fn assert_unauthorized(result: AnyResult<AppResponse>) {
+    assert_eq!(
+        result.unwrap_err().downcast::<ContractError>().unwrap(),
+        ContractError::Unauthorized {}
+    )
 }

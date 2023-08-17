@@ -1,9 +1,12 @@
 use std::fmt::Debug;
 
+use anyhow::Result as AnyResult;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
 use cosmwasm_std::{Addr, Api, CustomQuery, Storage};
-use cw_multi_test::{Bank, ContractWrapper, Distribution, Executor, Gov, Ibc, Module, Staking};
+use cw_multi_test::{
+    AppResponse, Bank, ContractWrapper, Distribution, Executor, Gov, Ibc, Module, Staking,
+};
 use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 
@@ -110,37 +113,35 @@ where
     C::ExecT: Clone + Debug + PartialEq + JsonSchema + DeserializeOwned + 'static,
     C::QueryT: CustomQuery + DeserializeOwned + 'static,
 {
-    pub fn update_emergency_owner(&self, sender: &Addr, emergency_owner: &Addr) -> bool {
-        self.app
-            .borrow_mut()
-            .execute_contract(
-                sender.to_owned(),
-                self.address.clone(),
-                &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
-                    astro_denom: None,
-                    gov_channel: None,
-                    main_controller_addr: None,
-                    main_maker: None,
-                    transfer_channel: None,
-                    accept_new_connections: None,
-                    timeout: None,
-                    max_signal_outage: None,
-                    emergency_owner: Some(emergency_owner.to_string()),
-                }),
-                &[],
-            )
-            .is_ok()
+    pub fn update_emergency_owner(
+        &self,
+        sender: &Addr,
+        emergency_owner: &Addr,
+    ) -> AnyResult<AppResponse> {
+        self.app.borrow_mut().execute_contract(
+            sender.to_owned(),
+            self.address.clone(),
+            &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+                astro_denom: None,
+                gov_channel: None,
+                main_controller_addr: None,
+                main_maker: None,
+                transfer_channel: None,
+                accept_new_connections: None,
+                timeout: None,
+                max_signal_outage: None,
+                emergency_owner: Some(emergency_owner.to_string()),
+            }),
+            &[],
+        )
     }
 
-    pub fn update_admin(&self, sender: &Addr) -> bool {
-        self.app
-            .borrow_mut()
-            .execute_contract(
-                sender.to_owned(),
-                self.address.clone(),
-                &ExecuteMsg::SetEmergencyOwnerAsAdmin {},
-                &[],
-            )
-            .is_ok()
+    pub fn update_admin(&self, sender: &Addr) -> AnyResult<AppResponse> {
+        self.app.borrow_mut().execute_contract(
+            sender.to_owned(),
+            self.address.clone(),
+            &ExecuteMsg::SetEmergencyOwnerAsAdmin {},
+            &[],
+        )
     }
 }

@@ -12,6 +12,7 @@ pub fn astroport_address() -> Addr {
     Addr::unchecked(ASTROPORT)
 }
 
+pub use anyhow;
 pub use cw_multi_test;
 use cw_multi_test::{App, Module, WasmKeeper};
 pub use satellite::{MockSatellite, MockSatelliteBuilder};

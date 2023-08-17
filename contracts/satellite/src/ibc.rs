@@ -127,7 +127,6 @@ fn do_packet_receive(
     }
 
     // TODO: Remove or_else and map_err method calls once the controller is upgraded to v1.0.0
-    // everywhere
     let satellite_msg = from_binary(&msg.packet.data)
         .or_else(|_| {
             let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
@@ -154,7 +153,6 @@ fn do_packet_receive(
             }
         }
         SatelliteMsg::Heartbeat {} => {}
-        _ => response.acknowledgement = ack_fail("satellite_message_is_not_supported"),
     }
     LATEST_HUB_SIGNAL_TIME.save(deps.storage, &env.block.time)?;
 
