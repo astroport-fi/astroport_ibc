@@ -44,6 +44,8 @@ dependencies = [
  "astro-satellite",
  "astro-satellite-package",
  "astroport-ibc",
+ "astroport-mocks",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 0.15.1",
  "cw2 0.15.1",

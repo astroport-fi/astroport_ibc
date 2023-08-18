@@ -26,3 +26,7 @@ cosmwasm-std = "1"
 cw-utils = "0.15"
 cw2 = "0.15"
 neutron-sdk = "0.6"
+
+[dev-dependencies]
+astroport-mocks = { path = "../../packages/astroport_mocks" }
+cosmwasm-schema = "1"
