@@ -40,6 +40,8 @@ pub enum ExecuteMsg {
     /// ## Executor
     /// Only the newly proposed owner can execute this
     ClaimOwnership {},
+    /// Sends heartbeats to specified satellites
+    SendHeartbeat { channels: Vec<String> },
 }
 
 #[cw_serde]

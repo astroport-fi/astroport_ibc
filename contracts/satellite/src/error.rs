@@ -1,4 +1,4 @@
-use astroport_ibc::TIMEOUT_LIMITS;
+use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
 use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -48,4 +48,10 @@ pub enum ContractError {
         TIMEOUT_LIMITS.end()
     )]
     TimeoutLimitsError {},
+    #[error(
+        "Signal outage must be within limits ({0} <= outage <= {1})",
+        SIGNAL_OUTAGE_LIMITS.start(),
+        SIGNAL_OUTAGE_LIMITS.end()
+    )]
+    SignalOutageLimitsError {},
 }

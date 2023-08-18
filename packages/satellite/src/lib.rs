@@ -16,6 +16,10 @@ pub struct InstantiateMsg {
     pub main_maker: String,
     /// when packet times out, measured on remote chain
     pub timeout: u64,
+    /// Time in seconds after which the satellite considers itself lost
+    pub max_signal_outage: u64,
+    /// An address that can migrate the contract and change its config if the satellite is lost
+    pub emergency_owner: String,
 }
 
 #[cw_serde]
@@ -27,6 +31,8 @@ pub struct UpdateConfigMsg {
     pub transfer_channel: Option<String>,
     pub accept_new_connections: Option<bool>,
     pub timeout: Option<u64>,
+    pub max_signal_outage: Option<u64>,
+    pub emergency_owner: Option<String>,
 }
 
 #[cw_serde]
@@ -52,6 +58,14 @@ pub enum ExecuteMsg<M: CustomMsg = Empty> {
     /// ## Executor
     /// Only the newly proposed owner can execute this
     ClaimOwnership {},
+    /// It sets the emergency owner as admin of the contract to migrate it if the satellite is lost
+    SetEmergencyOwnerAsAdmin {},
+}
+
+#[cw_serde]
+pub enum SatelliteMsg {
+    ExecuteProposal { id: u64, messages: Vec<CosmosMsg> },
+    Heartbeat {},
 }
 
 #[cw_serde]
@@ -62,7 +76,12 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {}
+pub struct MigrateMsg {
+    /// Time in seconds after which the satellite considers itself lost
+    pub max_signal_outage: u64,
+    /// An address that can migrate the contract and change its config if the satellite is lost
+    pub emergency_owner: String,
+}
 
 /// This is a generic ICS acknowledgement format.
 /// Proto defined here: https://github.com/cosmos/cosmos-sdk/blob/v0.42.0/proto/ibc/core/channel/v1/channel.proto#L141-L147
