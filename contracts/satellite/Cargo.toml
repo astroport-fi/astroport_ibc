@@ -1,6 +1,6 @@
 [package]
 name = "astro-satellite"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Astroport"]
 license = "Apache-2.0"
 description = "IBC enabled astroport satellite contract intended to be hosted on a remote chain."
@@ -31,4 +31,4 @@ itertools = "0.10"
 cosmwasm-schema = "1.1"
 
 [dev-dependencies]
-cw-multi-test = "0.15"
+astroport-mocks = { path = "../../packages/astroport_mocks" }

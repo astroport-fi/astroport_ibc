@@ -2,20 +2,19 @@ use astroport_ibc::TIMEOUT_LIMITS;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo, Response,
-    StdError,
+    attr, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
+    Response, StdError, SubMsg,
 };
 use cw2::{get_contract_version, set_contract_version};
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
+use astro_satellite_package::SatelliteMsg;
 use ibc_controller_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use ibc_controller_package::{ExecuteMsg, IbcProposal, InstantiateMsg};
-use ibc_controller_package::{MigrateMsg, QueryMsg};
+use ibc_controller_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
-use crate::migration::migrate_config;
 use crate::state::{Config, CONFIG, LAST_ERROR, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -69,7 +68,7 @@ pub fn execute(
 
             let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id: channel_id.clone(),
-                data: to_binary(&IbcProposal {
+                data: to_binary(&SatelliteMsg::ExecuteProposal {
                     id: proposal_id,
                     messages,
                 })?,
@@ -124,6 +123,21 @@ pub fn execute(
             })
             .map_err(Into::into)
         }
+        ExecuteMsg::SendHeartbeat { channels } => {
+            let mut res = Response::new().add_attribute("action", "send_heartbeat");
+
+            for channel in channels {
+                let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
+                    channel_id: channel.clone(),
+                    data: to_binary(&SatelliteMsg::Heartbeat {})?,
+                    timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
+                });
+                res.messages.push(SubMsg::new(ibc_msg));
+                res.attributes.push(attr("channel", channel));
+            }
+
+            Ok(res)
+        }
     }
 }
 
@@ -139,26 +153,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(mut deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
         "ibc-controller" => match contract_version.version.as_ref() {
-            "0.1.0" => migrate_config(&mut deps)?,
-            "0.2.0" => {
-                let new_timeout = msg
-                    .new_timeout
-                    .ok_or_else(|| StdError::generic_err("Missing new_timeout field"))?;
-
-                if !TIMEOUT_LIMITS.contains(&new_timeout) {
-                    return Err(ContractError::TimeoutLimitsError {});
-                }
-
-                CONFIG.update::<_, StdError>(deps.storage, |mut config| {
-                    config.timeout = new_timeout;
-                    Ok(config)
-                })?;
-            }
+            "0.3.0" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
@@ -210,10 +210,14 @@ mod tests {
                 timeout,
                 data,
             }) if channel_id == channel_id && timeout == &real_timeout => {
-                let proposal: IbcProposal = from_binary(&data).unwrap();
-                assert_eq!(proposal.id, proposal_id);
-                assert_eq!(proposal.messages.len(), 1);
-                assert_eq!(proposal.messages[0], proposal_msg);
+                let msg: SatelliteMsg = from_binary(&data).unwrap();
+                assert_eq!(
+                    msg,
+                    SatelliteMsg::ExecuteProposal {
+                        id: proposal_id,
+                        messages: vec![proposal_msg]
+                    }
+                );
             }
             _ => panic!("Unexpected message"),
         }

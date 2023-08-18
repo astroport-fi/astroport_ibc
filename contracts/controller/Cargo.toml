@@ -1,6 +1,6 @@
 [package]
 name = "ibc-controller"
-version = "0.3.0"
+version = "1.0.0"
 authors = ["Astroport"]
 license = "Apache-2.0"
 description = "IBC controller contract intended to be hosted on the main chain."
