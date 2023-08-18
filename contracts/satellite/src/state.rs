@@ -34,7 +34,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn update(&mut self, api: &dyn Api, params: UpdateConfigMsg) -> Result<(), ContractError> {
+    pub(crate) fn update(
+        &mut self,
+        api: &dyn Api,
+        params: UpdateConfigMsg,
+    ) -> Result<(), ContractError> {
         if let Some(astro_denom) = params.astro_denom {
             self.astro_denom = astro_denom;
         }
