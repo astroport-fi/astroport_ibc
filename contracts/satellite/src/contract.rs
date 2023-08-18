@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, wasm_execute, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout,
-    MessageInfo, Reply, Response, StdError,
+    to_binary, wasm_execute, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
+    IbcTimeout, MessageInfo, Reply, Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
@@ -21,7 +21,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub(crate) const RECEIVE_ID: u64 = 1;
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(all(not(feature = "library"), not(feature = "neutron")), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -62,7 +62,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(all(not(feature = "library"), not(feature = "neutron")), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -133,10 +133,16 @@ pub fn execute(
     }
 }
 
-fn check_messages(env: Env, mut messages: Vec<CosmosMsg>) -> Result<Response, ContractError> {
+pub fn check_messages<M>(
+    env: Env,
+    mut messages: Vec<CosmosMsg<M>>,
+) -> Result<Response<M>, ContractError>
+where
+    M: CustomMsg,
+{
     messages.push(CosmosMsg::Wasm(wasm_execute(
         env.contract.address,
-        &ExecuteMsg::CheckMessagesPassed {},
+        &ExecuteMsg::<M>::CheckMessagesPassed {},
         vec![],
     )?));
 
@@ -155,7 +161,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(all(not(feature = "library"), not(feature = "neutron")), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 

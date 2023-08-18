@@ -1,0 +1,28 @@
+[package]
+name = "astro-satellite-neutron"
+version = "1.0.0"
+authors = ["Astroport"]
+license = "Apache-2.0"
+description = """
+IBC enabled astroport satellite contract intended to be hosted on a remote chain.
+This is an extended version of the original astro-satellite contract.
+"""
+repository = "https://github.com/astroport-fi/astroport_ibc"
+homepage = "https://astroport.fi"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+library = []
+
+[dependencies]
+# features = ["neutron"] allows to import all IBC-related endpoints as well as reply/query endpoints.
+astro-satellite = { path = "../satellite", version = "1.0.0", features = ["neutron"] }
+astro-satellite-package = { path = "../../packages/satellite", version = "0.1" }
+astroport-ibc = { path = "../../packages/astroport-ibc" }
+cosmwasm-std = "1"
+cw-utils = "0.15"
+cw2 = "0.15"
+neutron-sdk = "0.6"
