@@ -87,7 +87,7 @@ dependencies = [
 [[package]]
 name = "astroport-governance"
 version = "1.2.0"
-source = "git+https://github.com/astroport-fi/astroport-governance?branch=feat/merge_hidden_2023_05_22#7e8126d688a640799dd059f93616a66b6c1ee12f"
+source = "git+https://github.com/astroport-fi/astroport-governance#f0ef7c6dde76fc77ce360262923366a5cde3c3f8"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "astroport-ibc"
-version = "0.1.0"
+version = "1.2.0"
 dependencies = [
  "cosmwasm-schema",
 ]
