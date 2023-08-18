@@ -21,14 +21,14 @@ checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
 name = "astro-satellite"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "astro-satellite-package",
  "astroport-ibc",
+ "astroport-mocks",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-multi-test",
  "cw-storage-plus 0.15.1",
  "cw-utils 0.15.1",
  "cw2 0.15.1",
@@ -39,7 +39,7 @@ dependencies = [
 
 [[package]]
 name = "astro-satellite-neutron"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "astro-satellite",
  "astro-satellite-package",
@@ -99,6 +99,20 @@ name = "astroport-ibc"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
+]
+
+[[package]]
+name = "astroport-mocks"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "astro-satellite",
+ "astro-satellite-package",
+ "astroport-ibc",
+ "cosmwasm-std",
+ "cw-multi-test 0.16.5",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -353,6 +367,24 @@ dependencies = [
  "cw-utils 0.15.1",
  "derivative",
  "itertools",
+ "prost 0.9.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-multi-test"
+version = "0.16.5"
+source = "git+https://github.com/astroport-fi/cw-multi-test.git?rev=269a2c829d1ad25d67caa4600f72d2a21fb8fdeb#269a2c829d1ad25d67caa4600f72d2a21fb8fdeb"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "derivative",
+ "itertools",
+ "k256",
  "prost 0.9.0",
  "schemars",
  "serde",
@@ -686,14 +718,14 @@ dependencies = [
 
 [[package]]
 name = "ibc-controller"
-version = "0.3.0"
+version = "1.0.0"
 dependencies = [
  "astro-satellite-package",
  "astroport-ibc",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-multi-test",
+ "cw-multi-test 0.15.1",
  "cw-storage-plus 0.15.1",
  "cw2 0.15.1",
  "ibc-controller-package",

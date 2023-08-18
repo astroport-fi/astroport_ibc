@@ -117,7 +117,7 @@ fn test_check_messages() {
         .execute_contract(
             owner.clone(),
             satellite_addr.clone(),
-            &ExecuteMsg::CheckMessages(messages),
+            &ExecuteMsg::<Empty>::CheckMessages(messages),
             &[],
         )
         .unwrap_err();
@@ -156,7 +156,7 @@ fn test_check_update_configs() {
     app.execute_contract(
         owner.clone(),
         satellite_addr.clone(),
-        &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+        &ExecuteMsg::<Empty>::UpdateConfig(UpdateConfigMsg {
             astro_denom: None,
             gov_channel: None,
             main_controller_addr: Some(Addr::unchecked("controller_addr_test").to_string()),
@@ -184,7 +184,7 @@ fn test_check_update_configs() {
         .execute_contract(
             owner.clone(),
             satellite_addr.clone(),
-            &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+            &ExecuteMsg::<Empty>::UpdateConfig(UpdateConfigMsg {
                 astro_denom: None,
                 gov_channel: Some(Addr::unchecked("controller_addr_test").to_string()),
                 main_controller_addr: None,
@@ -203,7 +203,7 @@ fn test_check_update_configs() {
     app.execute_contract(
         owner.clone(),
         satellite_addr.clone(),
-        &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+        &ExecuteMsg::<Empty>::UpdateConfig(UpdateConfigMsg {
             astro_denom: None,
             gov_channel: Some(Addr::unchecked("controller_addr_test").to_string()),
             main_controller_addr: None,

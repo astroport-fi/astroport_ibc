@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, wasm_execute, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
-    IbcTimeout, MessageInfo, Reply, Response, StdError, WasmMsg,
+    IbcTimeout, MessageInfo, Reply, Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
@@ -11,12 +11,12 @@ use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
 
 use crate::error::ContractError;
 use crate::migration::migrate_to_v100;
 use crate::state::{
-    store_proposal, Config, CONFIG, LATEST_HUB_SIGNAL_TIME, OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS,
+    instantiate_state, set_emegrency_owner_as_admin, store_proposal, update_config, CONFIG,
+    OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS,
 };
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -33,30 +33,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if !TIMEOUT_LIMITS.contains(&msg.timeout) {
-        return Err(ContractError::TimeoutLimitsError {});
-    }
-
-    if !SIGNAL_OUTAGE_LIMITS.contains(&msg.max_signal_outage) {
-        return Err(ContractError::SignalOutageLimitsError {});
-    }
-
-    CONFIG.save(
-        deps.storage,
-        &Config {
-            owner: deps.api.addr_validate(&msg.owner)?,
-            astro_denom: msg.astro_denom,
-            main_controller_port: format!("wasm.{}", msg.main_controller),
-            main_maker: msg.main_maker,
-            gov_channel: None,
-            transfer_channel: msg.transfer_channel,
-            timeout: msg.timeout,
-            max_signal_outage: msg.max_signal_outage,
-            emergency_owner: deps.api.addr_validate(&msg.emergency_owner)?,
-        },
-    )?;
-
-    LATEST_HUB_SIGNAL_TIME.save(deps.storage, &env.block.time)?;
+    instantiate_state(deps, env, msg)?;
 
     Ok(Response::new())
 }
@@ -97,22 +74,7 @@ pub fn execute(
                 .add_message(msg)
                 .add_attribute("action", "transfer_astro"))
         }
-        ExecuteMsg::UpdateConfig(params) => {
-            let mut config = CONFIG.load(deps.storage)?;
-            if !(info.sender == config.owner
-                || LATEST_HUB_SIGNAL_TIME
-                    .load(deps.storage)?
-                    .plus_seconds(config.max_signal_outage)
-                    < env.block.time
-                    && info.sender == config.emergency_owner)
-            {
-                return Err(ContractError::Unauthorized {});
-            }
-            config.update(deps.api, params)?;
-            CONFIG.save(deps.storage, &config)?;
-
-            Ok(Response::new().add_attribute("action", "update_config"))
-        }
+        ExecuteMsg::UpdateConfig(params) => update_config(deps, info, env, params),
         ExecuteMsg::CheckMessages(proposal_messages) => check_messages(env, proposal_messages),
         ExecuteMsg::CheckMessagesPassed {} => Err(ContractError::MessagesCheckPassed {}),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
@@ -146,22 +108,7 @@ pub fn execute(
             })
             .map_err(Into::into)
         }
-        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => {
-            let config = CONFIG.load(deps.storage)?;
-            if LATEST_HUB_SIGNAL_TIME
-                .load(deps.storage)?
-                .plus_seconds(config.max_signal_outage)
-                < env.block.time
-                && info.sender == config.emergency_owner
-            {
-                Ok(Response::new().add_message(WasmMsg::UpdateAdmin {
-                    contract_addr: env.contract.address.to_string(),
-                    admin: config.emergency_owner.to_string(),
-                }))
-            } else {
-                Err(ContractError::Unauthorized {})
-            }
-        }
+        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => set_emegrency_owner_as_admin(deps, env, info),
     }
 }
 

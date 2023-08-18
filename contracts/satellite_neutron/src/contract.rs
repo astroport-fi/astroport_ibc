@@ -10,12 +10,14 @@ use neutron_sdk::sudo::msg::{RequestPacketTimeoutHeight, TransferSudoMsg};
 
 use astro_satellite::contract::check_messages;
 use astro_satellite::error::ContractError;
-use astro_satellite::state::{Config, CONFIG, OWNERSHIP_PROPOSAL};
+use astro_satellite::migration::migrate_to_v100;
+use astro_satellite::state::{
+    instantiate_state, set_emegrency_owner_as_admin, update_config, CONFIG, OWNERSHIP_PROPOSAL,
+};
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg};
-use astroport_ibc::TIMEOUT_LIMITS;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -25,28 +27,13 @@ const FEE_DENOM: &str = "untrn";
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut<NeutronQuery>,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if !TIMEOUT_LIMITS.contains(&msg.timeout) {
-        return Err(ContractError::TimeoutLimitsError {});
-    }
-
-    CONFIG.save(
-        deps.storage,
-        &Config {
-            owner: deps.api.addr_validate(&msg.owner)?,
-            astro_denom: msg.astro_denom,
-            main_controller_port: format!("wasm.{}", msg.main_controller),
-            main_maker: msg.main_maker,
-            gov_channel: None,
-            transfer_channel: msg.transfer_channel,
-            timeout: msg.timeout,
-        },
-    )?;
+    instantiate_state(deps, env, msg)?;
 
     Ok(Response::new())
 }
@@ -87,17 +74,7 @@ pub fn execute(
                 .add_message(msg)
                 .add_attribute("action", "transfer_astro"))
         }
-        ExecuteMsg::UpdateConfig(params) => {
-            CONFIG.update(deps.storage, |mut config| {
-                if config.owner == info.sender {
-                    config.update(params)?;
-                    Ok(config)
-                } else {
-                    Err(ContractError::Unauthorized {})
-                }
-            })?;
-            Ok(Response::new().add_attribute("action", "update_config"))
-        }
+        ExecuteMsg::UpdateConfig(params) => update_config(deps, info, env, params),
         ExecuteMsg::CheckMessages(proposal_messages) => check_messages(env, proposal_messages),
         ExecuteMsg::CheckMessagesPassed {} => Err(ContractError::MessagesCheckPassed {}),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
@@ -131,6 +108,7 @@ pub fn execute(
             })
             .map_err(Into::into)
         }
+        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => set_emegrency_owner_as_admin(deps, env, info),
     }
 }
 
@@ -141,12 +119,14 @@ pub fn sudo(_deps: DepsMut, _env: Env, _msg: TransferSudoMsg) -> StdResult<Respo
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
         "astro-satellite" => match contract_version.version.as_ref() {
-            "0.2.0" => {}
+            "0.2.0" => {
+                migrate_to_v100(deps.branch(), &env, &msg)?;
+            }
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
@@ -181,6 +161,7 @@ fn min_ntrn_ibc_fee(fee: IbcFee) -> IbcFee {
 mod testing {
     use std::marker::PhantomData;
 
+    use astroport_ibc::SIGNAL_OUTAGE_LIMITS;
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, to_binary, ContractResult, CosmosMsg, OwnedDeps, SystemResult};
     use neutron_sdk::query::min_ibc_fee::MinIbcFeeResponse;
@@ -232,6 +213,8 @@ mod testing {
                 main_controller: "".to_string(),
                 main_maker: main_maker.to_string(),
                 timeout,
+                max_signal_outage: *SIGNAL_OUTAGE_LIMITS.start(),
+                emergency_owner: "test".to_string(),
             },
         )
         .unwrap();

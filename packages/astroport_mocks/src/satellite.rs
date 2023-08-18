@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use anyhow::Result as AnyResult;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
-use cosmwasm_std::{Addr, Api, CustomQuery, Storage};
+use cosmwasm_std::{Addr, Api, CustomQuery, Empty, Storage};
 use cw_multi_test::{
     AppResponse, Bank, ContractWrapper, Distribution, Executor, Gov, Ibc, Module, Staking,
 };
@@ -121,7 +121,7 @@ where
         self.app.borrow_mut().execute_contract(
             sender.to_owned(),
             self.address.clone(),
-            &ExecuteMsg::UpdateConfig(UpdateConfigMsg {
+            &ExecuteMsg::<Empty>::UpdateConfig(UpdateConfigMsg {
                 astro_denom: None,
                 gov_channel: None,
                 main_controller_addr: None,
@@ -140,7 +140,7 @@ where
         self.app.borrow_mut().execute_contract(
             sender.to_owned(),
             self.address.clone(),
-            &ExecuteMsg::SetEmergencyOwnerAsAdmin {},
+            &ExecuteMsg::<Empty>::SetEmergencyOwnerAsAdmin {},
             &[],
         )
     }
