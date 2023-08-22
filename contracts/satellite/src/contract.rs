@@ -15,7 +15,7 @@ use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::error::ContractError;
 use crate::migration::migrate_to_v100;
 use crate::state::{
-    instantiate_state, set_emegrency_owner_as_admin, store_proposal, update_config, CONFIG,
+    instantiate_state, set_emergency_owner_as_admin, store_proposal, update_config, CONFIG,
     OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS,
 };
 
@@ -108,7 +108,7 @@ pub fn execute(
             })
             .map_err(Into::into)
         }
-        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => set_emegrency_owner_as_admin(deps, env, info),
+        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => set_emergency_owner_as_admin(deps, env, info),
     }
 }
 

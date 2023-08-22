@@ -12,7 +12,7 @@ use astro_satellite::contract::check_messages;
 use astro_satellite::error::ContractError;
 use astro_satellite::migration::migrate_to_v100;
 use astro_satellite::state::{
-    instantiate_state, set_emegrency_owner_as_admin, update_config, CONFIG, OWNERSHIP_PROPOSAL,
+    instantiate_state, set_emergency_owner_as_admin, update_config, CONFIG, OWNERSHIP_PROPOSAL,
 };
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
@@ -108,7 +108,7 @@ pub fn execute(
             })
             .map_err(Into::into)
         }
-        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => set_emegrency_owner_as_admin(deps, env, info),
+        ExecuteMsg::SetEmergencyOwnerAsAdmin {} => set_emergency_owner_as_admin(deps, env, info),
     }
 }
 

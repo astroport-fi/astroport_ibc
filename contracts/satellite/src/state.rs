@@ -154,7 +154,7 @@ where
     Ok(Response::new().add_attribute("action", "update_config"))
 }
 
-pub fn set_emegrency_owner_as_admin<Q, M>(
+pub fn set_emergency_owner_as_admin<Q, M>(
     deps: DepsMut<Q>,
     env: Env,
     info: MessageInfo,
