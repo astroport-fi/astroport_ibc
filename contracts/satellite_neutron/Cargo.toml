@@ -19,7 +19,7 @@ library = []
 
 [dependencies]
 # features = ["neutron"] allows to import all IBC-related endpoints as well as reply/query endpoints.
-astro-satellite = { path = "../satellite", version = "1.0.0", features = ["neutron"] }
+astro-satellite = { path = "../satellite", version = "1.1.0", features = ["neutron"] }
 astro-satellite-package = { path = "../../packages/satellite", version = "0.1" }
 astroport-ibc = { path = "../../packages/astroport-ibc" }
 cosmwasm-std = "1"
