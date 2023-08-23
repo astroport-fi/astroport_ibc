@@ -1,34 +1,58 @@
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::rc::Rc;
 
-use astro_satellite::contract::{execute, instantiate, query, reply};
+use cosmwasm_schema::schemars::JsonSchema;
+use cosmwasm_schema::serde::Deserialize;
+use cosmwasm_std::{
+    from_slice, wasm_execute, Addr, Binary, Coin, CustomQuery, Deps, DepsMut, Empty, Env,
+    MessageInfo, Response, StdResult, WasmMsg,
+};
+use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::query::NeutronQuery;
+
 use astro_satellite::error::ContractError;
 use astro_satellite::state::Config;
+use astro_satellite_neutron::contract::{execute, instantiate};
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
-use astroport_mocks::{astroport_address, MockSatelliteBuilder};
-use cosmwasm_std::{
-    from_slice, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdResult, WasmMsg,
-};
-
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
+use astroport_mocks::cw_multi_test::{AppBuilder, FailingModule, WasmKeeper};
 use astroport_mocks::{
     anyhow::Result as AnyResult,
-    cw_multi_test::{App, AppResponse, BasicApp, Contract, ContractWrapper, Executor},
+    cw_multi_test::{AppResponse, BasicApp, Contract, ContractWrapper, Executor},
 };
+use astroport_mocks::{astroport_address, MockSatelliteBuilder};
 
-fn mock_app(owner: &Addr, coins: Vec<Coin>) -> App {
-    App::new(|router, _, storage| {
-        // initialization moved to App construction
-        router.bank.init_balance(storage, owner, coins).unwrap()
-    })
+pub type NeutronApp = BasicApp<NeutronMsg, NeutronQuery>;
+
+fn mock_app(owner: &Addr, coins: Vec<Coin>) -> NeutronApp {
+    AppBuilder::new()
+        .with_custom(FailingModule::<NeutronMsg, NeutronQuery, Empty>::new())
+        .with_wasm::<FailingModule<NeutronMsg, NeutronQuery, Empty>, WasmKeeper<_, _>>(
+            WasmKeeper::new(),
+        )
+        .build(|router, _, storage| {
+            // initialization moved to App construction
+            router.bank.init_balance(storage, owner, coins).unwrap()
+        })
 }
 
-fn satellite_contract() -> Box<dyn Contract<Empty>> {
-    Box::new(ContractWrapper::new_with_empty(execute, instantiate, query).with_reply_empty(reply))
+fn satellite_contract() -> Box<dyn Contract<NeutronMsg, NeutronQuery>> {
+    Box::new(ContractWrapper::new(execute, instantiate, noop_query))
 }
 
-fn noop_contract() -> Box<dyn Contract<Empty>> {
+fn noop_query<Q>(_deps: Deps<Q>, _env: Env, _msg: Empty) -> StdResult<Binary>
+where
+    Q: CustomQuery,
+{
+    Ok(Default::default())
+}
+
+fn noop_contract<T, C>() -> Box<dyn Contract<T, C>>
+where
+    T: Clone + Debug + PartialEq + JsonSchema + 'static,
+    C: CustomQuery + for<'de> Deserialize<'de> + 'static,
+{
     fn noop_execute(
         _deps: DepsMut,
         _env: Env,
@@ -36,10 +60,6 @@ fn noop_contract() -> Box<dyn Contract<Empty>> {
         _msg: Empty,
     ) -> StdResult<Response> {
         Ok(Response::new())
-    }
-
-    fn noop_query(_deps: Deps, _env: Env, _msg: Empty) -> StdResult<Binary> {
-        Ok(Default::default())
     }
 
     Box::new(ContractWrapper::new_with_empty(
