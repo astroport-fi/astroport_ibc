@@ -5,11 +5,10 @@ use cosmwasm_std::{
     IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
-use astro_satellite_package::IbcAckResult;
-use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
-
-use ibc_controller_package::astroport_governance::assembly::ExecuteMsg as AssemblyExecuteMsg;
-use ibc_controller_package::IbcProposal;
+use astro_satellite_package::{IbcAckResult, SatelliteMsg};
+use ibc_controller_package::astroport_governance::assembly::{
+    ExecuteMsg as AssemblyExecuteMsg, ProposalStatus,
+};
 
 use crate::state::{CONFIG, LAST_ERROR, PROPOSAL_STATE};
 
@@ -99,33 +98,42 @@ pub fn ibc_packet_timeout(
     _env: Env,
     msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
-    let ibc_proposal: IbcProposal = from_binary(&msg.packet.data)?;
-    let new_status = PROPOSAL_STATE.update(deps.storage, ibc_proposal.id, |state| match state {
-        None => Err(StdError::generic_err(format!(
-            "Proposal {} was not executed via controller",
-            ibc_proposal.id
-        ))),
-        Some(state) => {
-            if state == ProposalStatus::InProgress {
-                Ok(ProposalStatus::Failed {})
-            } else {
-                Err(StdError::generic_err(format!(
-                    "Proposal id: {} state is already {}",
-                    ibc_proposal.id, state
-                )))
-            }
-        }
-    })?;
-    let config = CONFIG.load(deps.storage)?;
+    let mut res = IbcBasicResponse::new();
 
-    Ok(IbcBasicResponse::new()
-        .add_submessage(confirm_assembly(
-            &config.owner,
-            ibc_proposal.id,
-            new_status,
-        )?)
-        .add_attribute("action", "packet_timeout")
-        .add_attribute("proposal_id", ibc_proposal.id.to_string()))
+    let satellite_msg: SatelliteMsg = from_binary(&msg.packet.data)?;
+    match satellite_msg {
+        SatelliteMsg::ExecuteProposal { id, .. } => {
+            // The original packet was a proposal
+            let new_status = PROPOSAL_STATE.update(deps.storage, id, |state| match state {
+                None => Err(StdError::generic_err(format!(
+                    "Proposal {} was not executed via controller",
+                    id
+                ))),
+                Some(state) => {
+                    if state == ProposalStatus::InProgress {
+                        Ok(ProposalStatus::Failed {})
+                    } else {
+                        Err(StdError::generic_err(format!(
+                            "Proposal id: {} state is already {}",
+                            id, state
+                        )))
+                    }
+                }
+            })?;
+            let config = CONFIG.load(deps.storage)?;
+
+            res = res
+                .add_submessage(confirm_assembly(&config.owner, id, new_status)?)
+                .add_attribute("action", "proposal_timeout")
+                .add_attribute("proposal_id", id.to_string());
+        }
+        SatelliteMsg::Heartbeat {} => {
+            // The original packet was a heartbeat
+            // We don't do anything with the timeout for a heartbeat
+            res = res.add_attribute("action", "heartbeat_timeout")
+        }
+    }
+    Ok(res)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -134,42 +142,51 @@ pub fn ibc_packet_ack(
     _env: Env,
     msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let mut res = IbcBasicResponse::new();
+
     let ibc_ack: IbcAckResult = from_binary(&msg.acknowledgement.data)?;
-    let ibc_proposal: IbcProposal = from_binary(&msg.original_packet.data)?;
-    let mut err_msg = "".to_string();
-    let new_status = PROPOSAL_STATE.update(deps.storage, ibc_proposal.id, |state| match state {
-        None => Err(StdError::generic_err(format!(
-            "Proposal {} was not executed via controller",
-            ibc_proposal.id
-        ))),
-        Some(state) => {
-            if state == ProposalStatus::InProgress {
-                match ibc_ack {
-                    IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
-                    IbcAckResult::Error(err) => {
-                        err_msg = err;
-                        Ok(ProposalStatus::Failed {})
+    let satellite_msg: SatelliteMsg = from_binary(&msg.original_packet.data)?;
+    match satellite_msg {
+        SatelliteMsg::ExecuteProposal { id, .. } => {
+            // The original packet was a proposal
+            let mut err_msg = "".to_string();
+            let new_status = PROPOSAL_STATE.update(deps.storage, id, |state| match state {
+                None => Err(StdError::generic_err(format!(
+                    "Proposal {} was not executed via controller",
+                    id
+                ))),
+                Some(state) => {
+                    if state == ProposalStatus::InProgress {
+                        match ibc_ack {
+                            IbcAckResult::Ok(_) => Ok(ProposalStatus::Executed {}),
+                            IbcAckResult::Error(err) => {
+                                err_msg = err;
+                                Ok(ProposalStatus::Failed {})
+                            }
+                        }
+                    } else {
+                        Err(StdError::generic_err(format!(
+                            "Proposal id: {} state is already {}",
+                            id, state
+                        )))
                     }
                 }
-            } else {
-                Err(StdError::generic_err(format!(
-                    "Proposal id: {} state is already {}",
-                    ibc_proposal.id, state
-                )))
-            }
-        }
-    })?;
-    LAST_ERROR.save(deps.storage, &err_msg)?;
-    let config = CONFIG.load(deps.storage)?;
+            })?;
+            LAST_ERROR.save(deps.storage, &err_msg)?;
+            let config = CONFIG.load(deps.storage)?;
 
-    Ok(IbcBasicResponse::new()
-        .add_submessage(confirm_assembly(
-            &config.owner,
-            ibc_proposal.id,
-            new_status,
-        )?)
-        .add_attribute("action", "packet_ack")
-        .add_attribute("proposal_id", ibc_proposal.id.to_string()))
+            res = res
+                .add_submessage(confirm_assembly(&config.owner, id, new_status)?)
+                .add_attribute("action", "proposal_ack")
+                .add_attribute("proposal_id", id.to_string());
+        }
+        SatelliteMsg::Heartbeat {} => {
+            // The original packet was a heartbeat
+            // We don't do anything with the ack from a heartbeat
+            res = res.add_attribute("action", "heartbeat_ack")
+        }
+    }
+    Ok(res)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -217,7 +234,7 @@ mod tests {
         // Ok acknowledgment
         let ack_msg = mock_ibc_packet_ack(
             channel_id,
-            &IbcProposal {
+            &SatelliteMsg::ExecuteProposal {
                 id: proposal_id,
                 messages: vec![],
             },
@@ -230,7 +247,7 @@ mod tests {
             .attributes
             .contains(&attr("proposal_id", proposal_id.to_string())));
         let state = PROPOSAL_STATE
-            .load(deps.as_ref().storage, proposal_id.into())
+            .load(deps.as_ref().storage, proposal_id)
             .unwrap();
         assert_eq!(state, ProposalStatus::Executed);
 
@@ -254,7 +271,7 @@ mod tests {
         execute(deps.as_mut(), env.clone(), info, msg).unwrap();
         let ack_msg = mock_ibc_packet_ack(
             channel_id,
-            &IbcProposal {
+            &SatelliteMsg::ExecuteProposal {
                 id: proposal_id,
                 messages: vec![],
             },
@@ -268,7 +285,7 @@ mod tests {
             .attributes
             .contains(&attr("proposal_id", proposal_id.to_string())));
         let state = PROPOSAL_STATE
-            .load(deps.as_ref().storage, proposal_id.into())
+            .load(deps.as_ref().storage, proposal_id)
             .unwrap();
         assert_eq!(state, ProposalStatus::Failed);
 
@@ -288,14 +305,14 @@ mod tests {
 
         // Previous proposal state was not changed
         let state = PROPOSAL_STATE
-            .load(deps.as_ref().storage, (proposal_id - 1).into())
+            .load(deps.as_ref().storage, proposal_id - 1)
             .unwrap();
         assert_eq!(state, ProposalStatus::Executed);
 
         // Proposal with unknown id
         let ack_msg = mock_ibc_packet_ack(
             channel_id,
-            &IbcProposal {
+            &SatelliteMsg::ExecuteProposal {
                 id: 128,
                 messages: vec![],
             },
@@ -322,8 +339,8 @@ mod tests {
         execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let timeout_msg = mock_ibc_packet_timeout(
-            &channel_id,
-            &IbcProposal {
+            channel_id,
+            &SatelliteMsg::ExecuteProposal {
                 id: proposal_id,
                 messages: vec![],
             },
@@ -335,7 +352,7 @@ mod tests {
             .contains(&attr("proposal_id", proposal_id.to_string())));
 
         let state = PROPOSAL_STATE
-            .load(deps.as_ref().storage, proposal_id.into())
+            .load(deps.as_ref().storage, proposal_id)
             .unwrap();
         assert_eq!(state, ProposalStatus::Failed);
 
@@ -366,14 +383,14 @@ mod tests {
 
         // timeout msg with unknown proposal id will fail
         let timeout_msg = mock_ibc_packet_timeout(
-            &channel_id,
-            &IbcProposal {
+            channel_id,
+            &SatelliteMsg::ExecuteProposal {
                 id: 128,
                 messages: vec![],
             },
         )
         .unwrap();
-        let err = ibc_packet_timeout(deps.as_mut(), env.clone(), timeout_msg).unwrap_err();
+        let err = ibc_packet_timeout(deps.as_mut(), env, timeout_msg).unwrap_err();
         assert_eq!(
             err,
             StdError::generic_err("Proposal 128 was not executed via controller")

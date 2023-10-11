@@ -200,7 +200,7 @@ mod tests {
             proposal_id,
             messages: vec![proposal_msg.clone()],
         };
-        let resp = execute(deps.as_mut(), env.clone(), info, msg.clone()).unwrap();
+        let resp = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         assert_eq!(resp.messages.len(), 1);
         let real_timeout = IbcTimeout::with_timestamp(env.block.time.plus_seconds(360));
@@ -210,7 +210,7 @@ mod tests {
                 timeout,
                 data,
             }) if channel_id == channel_id && timeout == &real_timeout => {
-                let msg: SatelliteMsg = from_binary(&data).unwrap();
+                let msg: SatelliteMsg = from_binary(data).unwrap();
                 assert_eq!(
                     msg,
                     SatelliteMsg::ExecuteProposal {
@@ -223,7 +223,7 @@ mod tests {
         }
 
         let state = PROPOSAL_STATE
-            .load(deps.as_ref().storage, proposal_id.into())
+            .load(deps.as_ref().storage, proposal_id)
             .unwrap();
         assert_eq!(state, ProposalStatus::InProgress {})
     }
