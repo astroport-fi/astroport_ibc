@@ -130,7 +130,9 @@ pub fn ibc_packet_timeout(
         SatelliteMsg::Heartbeat {} => {
             // The original packet was a heartbeat
             // We don't do anything with the timeout for a heartbeat
-            res = res.add_attribute("action", "heartbeat_timeout")
+            res = res
+                .add_attribute("action", "heartbeat_timeout")
+                .add_attribute("channel_id", msg.packet.src.channel_id)
         }
     }
     Ok(res)
@@ -183,7 +185,9 @@ pub fn ibc_packet_ack(
         SatelliteMsg::Heartbeat {} => {
             // The original packet was a heartbeat
             // We don't do anything with the ack from a heartbeat
-            res = res.add_attribute("action", "heartbeat_ack")
+            res = res
+                .add_attribute("action", "heartbeat_ack")
+                .add_attribute("channel_id", msg.original_packet.src.channel_id)
         }
     }
     Ok(res)
@@ -220,8 +224,14 @@ mod tests {
         }
     }
 
+    fn mock_ibc_heartbeat(channel_id: &str) -> ExecuteMsg {
+        ExecuteMsg::SendHeartbeat {
+            channels: vec![channel_id.to_string()],
+        }
+    }
+
     #[test]
-    fn channel_ack() {
+    fn channel_proposal_ack() {
         let (mut deps, env, info) = mock_all(OWNER);
         init_contract(&mut deps, env.clone(), info.clone());
 
@@ -328,7 +338,32 @@ mod tests {
     }
 
     #[test]
-    fn channel_timeout() {
+    fn channel_heartbeat_ack() {
+        let (mut deps, env, info) = mock_all(OWNER);
+        init_contract(&mut deps, env.clone(), info.clone());
+
+        let channel_id = "channel-0";
+
+        let msg = mock_ibc_heartbeat(channel_id);
+        execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+        // Ok acknowledgment
+        let ack_msg = mock_ibc_packet_ack(
+            channel_id,
+            &SatelliteMsg::Heartbeat {},
+            IbcAcknowledgement::encode_json(&IbcAckResult::Ok(Binary::default())).unwrap(),
+        )
+        .unwrap();
+        let resp = ibc_packet_ack(deps.as_mut(), env, ack_msg).unwrap();
+
+        assert!(resp
+            .attributes
+            .contains(&attr("action", "heartbeat_ack".to_string())));
+        assert!(resp.attributes.contains(&attr("channel_id", channel_id)));
+    }
+
+    #[test]
+    fn channel_proposal_timeout() {
         let (mut deps, env, info) = mock_all(OWNER);
         init_contract(&mut deps, env.clone(), info.clone());
 
@@ -395,6 +430,24 @@ mod tests {
             err,
             StdError::generic_err("Proposal 128 was not executed via controller")
         )
+    }
+
+    #[test]
+    fn channel_heartbeat_timeout() {
+        let (mut deps, env, info) = mock_all(OWNER);
+        init_contract(&mut deps, env.clone(), info.clone());
+
+        let channel_id = "channel-0";
+
+        let msg = mock_ibc_heartbeat(channel_id);
+        execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+        let timeout_msg = mock_ibc_packet_timeout(channel_id, &SatelliteMsg::Heartbeat {}).unwrap();
+        let resp = ibc_packet_timeout(deps.as_mut(), env, timeout_msg).unwrap();
+        assert!(resp
+            .attributes
+            .contains(&attr("action", "heartbeat_timeout".to_string())));
+        assert!(resp.attributes.contains(&attr("channel_id", channel_id)));
     }
 
     #[test]
