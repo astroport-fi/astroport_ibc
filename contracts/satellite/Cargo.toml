@@ -28,9 +28,9 @@ cw-storage-plus = "0.15"
 cw2 = "0.15"
 thiserror = "1.0"
 cw-utils = "0.15"
-ibc-controller-package = { path = "../../packages/controller" }
-astro-satellite-package = { path = "../../packages/satellite" }
-astroport-ibc = { path = "../../packages/astroport-ibc" }
+ibc-controller-package = { path = "../../packages/controller", version = "1.0" }
+astro-satellite-package = { path = "../../packages/satellite", version = "1.0" }
+astroport-ibc = { path = "../../packages/astroport-ibc", version = "1.2" }
 itertools = "0.10"
 cosmwasm-schema = "1.1"
 
