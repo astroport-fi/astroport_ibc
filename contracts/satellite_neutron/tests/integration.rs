@@ -148,6 +148,63 @@ fn test_check_messages() {
 }
 
 #[test]
+fn test_execute_multisig() {
+    let owner = Addr::unchecked("owner");
+    let mut app = mock_app(&owner, vec![]);
+
+    let satellite_code = app.store_code(satellite_contract());
+
+    let satellite_addr = app
+        .instantiate_contract(
+            satellite_code,
+            owner.clone(),
+            &InstantiateMsg {
+                owner: owner.to_string(),
+                astro_denom: "none".to_string(),
+                transfer_channel: "none".to_string(),
+                main_controller: "none".to_string(),
+                main_maker: "none".to_string(),
+                timeout: 60,
+                max_signal_outage: 1209600,
+                emergency_owner: owner.to_string(),
+            },
+            &[],
+            "Satellite label",
+            Some(owner.to_string()),
+        )
+        .unwrap();
+
+    let noop_code = app.store_code(noop_contract());
+    let noop_addr = app
+        .instantiate_contract(noop_code, owner.clone(), &Empty {}, &[], "none", None)
+        .unwrap();
+
+    let messages: Vec<_> = (0..5)
+        .into_iter()
+        .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
+        .collect();
+
+    let random = Addr::unchecked("random");
+    let err = app
+        .execute_contract(
+            random.clone(),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::ExecuteFromMultisig(messages.clone()),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(ContractError::Unauthorized {}, err.downcast().unwrap());
+
+    app.execute_contract(
+        owner.clone(),
+        satellite_addr.clone(),
+        &ExecuteMsg::<Empty>::ExecuteFromMultisig(messages),
+        &[],
+    )
+    .unwrap();
+}
+
+#[test]
 fn test_check_update_configs() {
     let owner = Addr::unchecked("owner");
     let mut app = mock_app(&owner, vec![]);

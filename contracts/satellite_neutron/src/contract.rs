@@ -8,7 +8,7 @@ use neutron_sdk::bindings::query::NeutronQuery;
 use neutron_sdk::query::min_ibc_fee::query_min_ibc_fee;
 use neutron_sdk::sudo::msg::{RequestPacketTimeoutHeight, TransferSudoMsg};
 
-use astro_satellite::contract::check_messages;
+use astro_satellite::contract::{check_messages, exec_from_multisig};
 use astro_satellite::error::ContractError;
 use astro_satellite::migration::migrate_to_v100;
 use astro_satellite::state::{
@@ -76,6 +76,9 @@ pub fn execute(
         }
         ExecuteMsg::UpdateConfig(params) => update_config(deps, info, env, params),
         ExecuteMsg::CheckMessages(proposal_messages) => check_messages(env, proposal_messages),
+        ExecuteMsg::ExecuteFromMultisig(proposal_messages) => {
+            exec_from_multisig(deps.querier.into_empty(), info, env, proposal_messages)
+        }
         ExecuteMsg::CheckMessagesPassed {} => Err(ContractError::MessagesCheckPassed {}),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
             let config = CONFIG.load(deps.storage)?;
@@ -127,6 +130,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response,
             "0.2.0" => {
                 migrate_to_v100(deps.branch(), &env, &msg)?;
             }
+            "1.1.0" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
@@ -161,10 +165,11 @@ fn min_ntrn_ibc_fee(fee: IbcFee) -> IbcFee {
 mod testing {
     use std::marker::PhantomData;
 
-    use astroport_ibc::SIGNAL_OUTAGE_LIMITS;
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, to_binary, ContractResult, CosmosMsg, OwnedDeps, SystemResult};
     use neutron_sdk::query::min_ibc_fee::MinIbcFeeResponse;
+
+    use astroport_ibc::SIGNAL_OUTAGE_LIMITS;
 
     use super::*;
 

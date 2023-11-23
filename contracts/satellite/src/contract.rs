@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, wasm_execute, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
-    IbcTimeout, MessageInfo, Reply, Response, StdError,
+    IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
@@ -76,6 +76,9 @@ pub fn execute(
         }
         ExecuteMsg::UpdateConfig(params) => update_config(deps, info, env, params),
         ExecuteMsg::CheckMessages(proposal_messages) => check_messages(env, proposal_messages),
+        ExecuteMsg::ExecuteFromMultisig(proposal_messages) => {
+            exec_from_multisig(deps.querier, info, env, proposal_messages)
+        }
         ExecuteMsg::CheckMessagesPassed {} => Err(ContractError::MessagesCheckPassed {}),
         ExecuteMsg::ProposeNewOwner { owner, expires_in } => {
             let config = CONFIG.load(deps.storage)?;
@@ -130,6 +133,27 @@ where
         .add_messages(messages))
 }
 
+pub fn exec_from_multisig<M>(
+    querier: QuerierWrapper,
+    info: MessageInfo,
+    env: Env,
+    messages: Vec<CosmosMsg<M>>,
+) -> Result<Response<M>, ContractError>
+where
+    M: CustomMsg,
+{
+    match querier
+        .query_wasm_contract_info(env.contract.address)?
+        .admin
+    {
+        None => Err(ContractError::Unauthorized {}),
+        Some(admin) if admin != info.sender => Err(ContractError::Unauthorized {}),
+        _ => Ok(()),
+    }?;
+
+    Ok(Response::new().add_messages(messages))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     match msg {
@@ -149,6 +173,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response,
             "0.2.0" => {
                 migrate_to_v100(deps.branch(), &env, &msg)?;
             }
+            "1.1.0" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),

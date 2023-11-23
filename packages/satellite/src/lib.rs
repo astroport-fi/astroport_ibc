@@ -40,6 +40,7 @@ pub enum ExecuteMsg<M: CustomMsg = Empty> {
     TransferAstro {},
     UpdateConfig(UpdateConfigMsg),
     CheckMessages(Vec<CosmosMsg<M>>),
+    ExecuteFromMultisig(Vec<CosmosMsg<M>>),
     CheckMessagesPassed {},
     /// Creates a request to change contract ownership
     /// ## Executor
