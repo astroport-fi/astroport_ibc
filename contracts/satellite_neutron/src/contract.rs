@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{coin, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
+use cosmwasm_std::{coin, DepsMut, Empty, Env, MessageInfo, Response, StdError, StdResult};
 use cw2::{get_contract_version, set_contract_version};
 use cw_utils::must_pay;
 use neutron_sdk::bindings::msg::{IbcFee, NeutronMsg};
@@ -10,14 +10,13 @@ use neutron_sdk::sudo::msg::{RequestPacketTimeoutHeight, TransferSudoMsg};
 
 use astro_satellite::contract::{check_messages, exec_from_multisig};
 use astro_satellite::error::ContractError;
-use astro_satellite::migration::migrate_to_v100;
 use astro_satellite::state::{
     instantiate_state, set_emergency_owner_as_admin, update_config, CONFIG, OWNERSHIP_PROPOSAL,
 };
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
 };
-use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg};
+use astro_satellite_package::{ExecuteMsg, InstantiateMsg};
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -122,14 +121,11 @@ pub fn sudo(_deps: DepsMut, _env: Env, _msg: TransferSudoMsg) -> StdResult<Respo
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "astro-satellite" => match contract_version.version.as_ref() {
-            "0.2.0" => {
-                migrate_to_v100(deps.branch(), &env, &msg)?;
-            }
+        "astro-satellite-neutron" => match contract_version.version.as_ref() {
             "1.1.0" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
