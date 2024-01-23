@@ -4,7 +4,7 @@ version = "1.2.1"
 authors = ["Astroport"]
 edition = "2021"
 description = "Common Astroport IBC types and constants"
-license = "GPL-3-only"
+license = "GPL-3.0-only"
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"
 
