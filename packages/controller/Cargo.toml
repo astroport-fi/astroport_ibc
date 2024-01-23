@@ -2,7 +2,7 @@
 name = "ibc-controller-package"
 version = "1.0.0"
 authors = ["Astroport"]
-license = "GPL-3"
+license = "GPL-3-only"
 description = "Astroport ibc-controller contract's types"
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"

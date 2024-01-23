@@ -2,7 +2,7 @@
 name = "astro-satellite"
 version = "1.1.0"
 authors = ["Astroport"]
-license = "GPL-3"
+license = "GPL-3-only"
 description = "IBC enabled astroport satellite contract intended to be hosted on a remote chain."
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"

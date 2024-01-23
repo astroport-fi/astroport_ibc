@@ -2,7 +2,7 @@
 name = "astro-satellite-package"
 version = "1.0.0"
 authors = ["Astroport"]
-license = "GPL-3"
+license = "GPL-3-only"
 description = "Astroport satellite contract's types"
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"
