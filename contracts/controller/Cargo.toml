@@ -2,7 +2,7 @@
 name = "ibc-controller"
 version = "1.1.0"
 authors = ["Astroport"]
-license = "Apache-2.0"
+license = "GPL-3"
 description = "IBC controller contract intended to be hosted on the main chain."
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"
