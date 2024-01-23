@@ -61,7 +61,7 @@ publish() {
 
 ROOT_DIR="$(realpath "$1")"
 
-FIRST_CRATES="astroport-ibc ibc-controller-package astro-satellite-package"
+FIRST_CRATES="astroport-ibc ibc-controller-package astro-satellite-package astro-satellite"
 SKIP_CRATES="astroport-cw20-ics20"
 
 main() {
