@@ -1,11 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, wasm_execute, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
+    to_json_binary, wasm_execute, Binary, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
     IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
-use cw_utils::must_pay;
 
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
@@ -60,14 +59,20 @@ pub fn execute(
     match msg {
         ExecuteMsg::TransferAstro {} => {
             let config = CONFIG.load(deps.storage)?;
-            let amount = must_pay(&info, &config.astro_denom)?;
+
+            // Query and send the whole astro balance
+            let astro_balance = deps
+                .querier
+                .query_balance(&env.contract.address, &config.astro_denom)?;
+
+            if astro_balance.amount.is_zero() {
+                return Err(ContractError::NoAstroBalance {});
+            }
+
             let msg = CosmosMsg::Ibc(IbcMsg::Transfer {
                 channel_id: config.transfer_channel,
                 to_address: config.main_maker,
-                amount: Coin {
-                    denom: config.astro_denom.clone(),
-                    amount,
-                },
+                amount: astro_balance,
                 timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
             });
             Ok(Response::new()
