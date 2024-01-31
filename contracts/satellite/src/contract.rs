@@ -173,7 +173,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response,
             "0.2.0" => {
                 migrate_to_v100(deps.branch(), &env, &msg)?;
             }
-            "1.1.0" => {}
+            "1.1.0" | "1.1.0-hubmove" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),

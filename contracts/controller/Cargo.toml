@@ -1,9 +1,9 @@
 [package]
 name = "ibc-controller"
-version = "1.1.0"
+version = "1.1.1"
 authors = ["Astroport"]
 license = "GPL-3.0-only"
-description = "IBC controller contract intended to be hosted on the main chain."
+description = "Astroport IBC controller serves as a bridge for governance messages between Assembly and outposts."
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"
 edition = "2021"
@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
-# library = []
+library = []
 
 [dependencies]
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
