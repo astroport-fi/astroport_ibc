@@ -24,7 +24,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub(crate) const RECEIVE_ID: u64 = 1;
 
-#[cfg_attr(all(not(feature = "library"), not(feature = "neutron")), entry_point)]
+#[cfg_attr(all(not(feature = "library")), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -50,7 +50,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     }
 }
 
-#[cfg_attr(all(not(feature = "library"), not(feature = "neutron")), entry_point)]
+#[cfg_attr(all(not(feature = "library")), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -164,7 +164,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
     }
 }
 
-#[cfg_attr(all(not(feature = "library"), not(feature = "neutron")), entry_point)]
+#[cfg_attr(all(not(feature = "library")), entry_point)]
 pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 

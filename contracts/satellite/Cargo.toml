@@ -16,10 +16,6 @@ crate-type = ["cdylib", "rlib"]
 backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
-# this feature disables instantiate/execute/migrate exports so neutron specific version
-# can reimplement them
-neutron = []
-default = []
 
 [dependencies]
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
