@@ -19,13 +19,13 @@ library = []
 
 [dependencies]
 # features = ["neutron"] allows to import all IBC-related endpoints as well as reply/query endpoints.
-astro-satellite = { path = "../satellite", version = "1.1.0", features = ["neutron"] }
+astro-satellite = { path = "../satellite", version = "1.1.0-hubmove", features = ["neutron"] }
 astro-satellite-package = { path = "../../packages/satellite", version = "1.0.0" }
 astroport-ibc = { path = "../../packages/astroport-ibc", version = "1.2.1" }
-cosmwasm-std = "1"
-cw-utils = "0.15"
-cw2 = "0.15"
-neutron-sdk = "0.6"
+cosmwasm-std = "1.5"
+cw-utils = "1"
+cw2 = "1"
+neutron-sdk = "0.8.0"
 
 [dev-dependencies]
 astroport-mocks = { path = "../../packages/astroport_mocks" }

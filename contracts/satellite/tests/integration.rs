@@ -7,7 +7,7 @@ use astro_satellite::state::Config;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
 use astroport_mocks::{astroport_address, MockSatelliteBuilder};
 use cosmwasm_std::{
-    from_slice, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
+    from_json, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
     StdResult, WasmMsg,
 };
 
@@ -109,7 +109,6 @@ fn test_check_messages() {
         .unwrap();
 
     let messages: Vec<_> = (0..5)
-        .into_iter()
         .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
@@ -160,7 +159,6 @@ fn test_execute_multisig() {
         .unwrap();
 
     let messages: Vec<_> = (0..5)
-        .into_iter()
         .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
@@ -233,7 +231,7 @@ fn test_check_update_configs() {
         .query_wasm_raw(satellite_addr.clone(), b"config".as_slice())
         .unwrap()
     {
-        let res: Config = from_slice(&res).unwrap();
+        let res: Config = from_json(res).unwrap();
         assert_eq!("wasm.controller_addr_test", res.main_controller_port);
     }
 

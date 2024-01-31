@@ -5,7 +5,7 @@ use std::rc::Rc;
 use cosmwasm_schema::schemars::JsonSchema;
 use cosmwasm_schema::serde::Deserialize;
 use cosmwasm_std::{
-    from_slice, wasm_execute, Addr, Binary, Coin, CustomQuery, Deps, DepsMut, Empty, Env,
+    from_json, wasm_execute, Addr, Binary, Coin, CustomQuery, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdResult, WasmMsg,
 };
 use neutron_sdk::bindings::msg::NeutronMsg;
@@ -129,7 +129,6 @@ fn test_check_messages() {
         .unwrap();
 
     let messages: Vec<_> = (0..5)
-        .into_iter()
         .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
@@ -180,7 +179,6 @@ fn test_execute_multisig() {
         .unwrap();
 
     let messages: Vec<_> = (0..5)
-        .into_iter()
         .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
@@ -253,7 +251,7 @@ fn test_check_update_configs() {
         .query_wasm_raw(satellite_addr.clone(), b"config".as_slice())
         .unwrap()
     {
-        let res: Config = from_slice(&res).unwrap();
+        let res: Config = from_json(res).unwrap();
         assert_eq!("wasm.controller_addr_test", res.main_controller_port);
     }
 

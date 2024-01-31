@@ -162,7 +162,7 @@ mod testing {
     use std::marker::PhantomData;
 
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, to_binary, ContractResult, CosmosMsg, OwnedDeps, SystemResult};
+    use cosmwasm_std::{coins, to_json_binary, ContractResult, CosmosMsg, OwnedDeps, SystemResult};
     use neutron_sdk::query::min_ibc_fee::MinIbcFeeResponse;
 
     use astroport_ibc::SIGNAL_OUTAGE_LIMITS;
@@ -173,7 +173,7 @@ mod testing {
     ) -> OwnedDeps<MockStorage, MockApi, MockQuerier<NeutronQuery>, NeutronQuery> {
         let neutron_custom_handler = |request: &NeutronQuery| {
             let contract_result: ContractResult<_> = match request {
-                NeutronQuery::MinIbcFee {} => to_binary(&MinIbcFeeResponse {
+                NeutronQuery::MinIbcFee {} => to_json_binary(&MinIbcFeeResponse {
                     min_fee: IbcFee {
                         recv_fee: vec![],
                         ack_fee: coins(10000, FEE_DENOM),

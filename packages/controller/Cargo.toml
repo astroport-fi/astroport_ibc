@@ -9,7 +9,7 @@ homepage = "https://astroport.fi"
 edition = "2021"
 
 [dependencies]
-astroport-governance = { git = "https://github.com/astroport-fi/astroport-governance", version = "1" }
-astroport-ibc = { path = "../astroport-ibc", version = "1" }
-cosmwasm-std = "1.1"
-cosmwasm-schema = "1.1"
+astroport-governance = { workspace = true }
+astroport-ibc = { workspace = true }
+cosmwasm-std = { workspace = true }
+cosmwasm-schema = { workspace = true }

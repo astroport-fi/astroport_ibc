@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, wasm_execute, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
+    to_json_binary, wasm_execute, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
     IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
@@ -159,7 +159,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
     match msg {
         QueryMsg::ProposalState { id } => {
             let state = RESULTS.load(deps.storage, id)?;
-            Ok(to_binary(&state)?)
+            Ok(to_json_binary(&state)?)
         }
     }
 }
