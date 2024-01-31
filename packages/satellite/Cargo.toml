@@ -1,8 +1,8 @@
 [package]
 name = "astro-satellite-package"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Astroport"]
-license = "Apache-2.0"
+license = "GPL-3.0-only"
 description = "Astroport satellite contract's types"
 repository = "https://github.com/astroport-fi/astroport_ibc"
 homepage = "https://astroport.fi"
