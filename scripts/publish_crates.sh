@@ -61,8 +61,8 @@ publish() {
 
 ROOT_DIR="$(realpath "$1")"
 
-FIRST_CRATES="astroport-ibc ibc-controller-package astro-satellite-package"
-SKIP_CRATES="ALL"
+FIRST_CRATES="astroport-ibc ibc-controller-package astro-satellite-package astro-satellite"
+SKIP_CRATES="astroport-cw20-ics20"
 
 main() {
   for contract in $FIRST_CRATES; do
