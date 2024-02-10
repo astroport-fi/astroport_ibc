@@ -1,10 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, wasm_execute, Binary, CosmosMsg, CustomMsg, Deps, DepsMut, Env, IbcMsg,
-    IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError,
+    ensure, to_json_binary, wasm_execute, Addr, Binary, CosmosMsg, CustomMsg, Deps, DepsMut, Env,
+    IbcMsg, IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError,
 };
 use cw2::{get_contract_version, set_contract_version};
+use cw_storage_plus::Map;
 
 use astro_satellite_package::astroport_governance::astroport::common::{
     claim_ownership, drop_ownership_proposal, propose_new_owner,
@@ -12,7 +13,6 @@ use astro_satellite_package::astroport_governance::astroport::common::{
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
-use crate::migration::migrate_to_v100;
 use crate::state::{
     instantiate_state, set_emergency_owner_as_admin, store_proposal, update_config, CONFIG,
     OWNERSHIP_PROPOSAL, REPLY_DATA, RESULTS,
@@ -21,7 +21,7 @@ use crate::state::{
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub(crate) const RECEIVE_ID: u64 = 1;
+pub const RECEIVE_ID: u64 = 1;
 
 #[cfg_attr(all(not(feature = "library")), entry_point)]
 pub fn instantiate(
@@ -173,22 +173,61 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
-    match contract_version.contract.as_ref() {
+    let response = match contract_version.contract.as_ref() {
         "astro-satellite" => match contract_version.version.as_ref() {
-            "0.2.0" => {
-                migrate_to_v100(deps.branch(), &env, &msg)?;
+            "1.1.0-hubmove" => {
+                set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+                Response::new()
             }
-            "1.1.0" | "1.1.0-hubmove" => {}
+            _ => return Err(ContractError::MigrationError {}),
+        },
+        "astro-assembly" => match contract_version.version.as_ref() {
+            "1.3.2" => {
+                // Converting Assembly on Terra into Satellite.
+                // Tested on forked Terra mainnet. Gas used: 2_492_503. State was successfully wiped out.
+                // ibc port was obtained.
+
+                ensure!(
+                    env.block.chain_id == "pisco-1" || env.block.chain_id == "phoenix-1",
+                    StdError::generic_err(
+                        "Assembly -> Satellite conversion is only available on Terra"
+                    )
+                );
+
+                let init_msg = msg
+                    .init_msg
+                    .ok_or_else(|| StdError::generic_err("init_msg must be set on Terra"))?;
+
+                deps.storage.remove(b"proposal_count");
+                let proposals: Map<u64, ()> = Map::new("proposals");
+                proposals.clear(deps.storage);
+
+                let cw_admin = deps
+                    .querier
+                    .query_wasm_contract_info(&env.contract.address)?
+                    .admin
+                    .unwrap();
+                // Even though info object is ignored in instantiate, we provide it for clarity
+                let info = MessageInfo {
+                    sender: Addr::unchecked(cw_admin),
+                    funds: vec![],
+                };
+                // Instantiate Satellite state.
+                // Config and cw2 info will be overwritten.
+                instantiate(deps.branch(), env, info, init_msg)?
+            }
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
     };
 
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    Ok(Response::new()
-        .add_attribute("previous_contract_name", &contract_version.contract)
-        .add_attribute("previous_contract_version", &contract_version.version)
-        .add_attribute("new_contract_name", CONTRACT_NAME)
-        .add_attribute("new_contract_version", CONTRACT_VERSION))
+    Ok(response.add_attributes([
+        ("previous_contract_name", contract_version.contract.as_str()),
+        (
+            "previous_contract_version",
+            contract_version.version.as_str(),
+        ),
+        ("new_contract_name", CONTRACT_NAME),
+        ("new_contract_version", CONTRACT_VERSION),
+    ]))
 }
