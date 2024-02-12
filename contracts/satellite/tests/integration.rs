@@ -99,9 +99,19 @@ fn test_check_messages() {
             },
             &[],
             "Satellite label",
-            None,
+            Some(owner.to_string()),
         )
         .unwrap();
+
+    app.execute(
+        owner.clone(),
+        WasmMsg::UpdateAdmin {
+            contract_addr: satellite_addr.to_string(),
+            admin: satellite_addr.to_string(),
+        }
+        .into(),
+    )
+    .unwrap();
 
     let noop_code = app.store_code(noop_contract());
     let noop_addr = app
@@ -123,6 +133,60 @@ fn test_check_messages() {
     assert_eq!(
         ContractError::MessagesCheckPassed {},
         err.downcast().unwrap()
+    );
+
+    // Try to update contract admin
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::UpdateAdmin {
+                contract_addr: satellite_addr.to_string(),
+                admin: "hacker".to_string(),
+            }
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.downcast::<ContractError>().unwrap(),
+        ContractError::MessagesCheckPassed {}
+    );
+
+    // Try to clear contract admin
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::ClearAdmin {
+                contract_addr: satellite_addr.to_string(),
+            }
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.downcast::<ContractError>().unwrap(),
+        ContractError::MessagesCheckPassed {}
+    );
+
+    // Can't check satellite migration message
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::Migrate {
+                contract_addr: satellite_addr.to_string(),
+                new_code_id: 100,
+                msg: Default::default(),
+            }
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Generic error: Can't check messages with a migration message of the contract itself"
     );
 }
 

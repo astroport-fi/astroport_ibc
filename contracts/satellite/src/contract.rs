@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     ensure, to_json_binary, wasm_execute, Addr, Binary, CosmosMsg, CustomMsg, Deps, DepsMut, Env,
-    IbcMsg, IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError,
+    IbcMsg, IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError, WasmMsg,
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw_storage_plus::Map;
@@ -127,6 +127,17 @@ pub fn check_messages<M>(
 where
     M: CustomMsg,
 {
+    messages.iter().try_for_each(|msg| match msg {
+        CosmosMsg::Wasm(WasmMsg::Migrate { contract_addr, .. })
+            if contract_addr == env.contract.address.as_str() =>
+        {
+            Err(StdError::generic_err(
+                "Can't check messages with a migration message of the contract itself",
+            ))
+        }
+        _ => Ok(()),
+    })?;
+
     messages.push(CosmosMsg::Wasm(wasm_execute(
         env.contract.address,
         &ExecuteMsg::<M>::CheckMessagesPassed {},
