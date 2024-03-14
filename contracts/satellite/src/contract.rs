@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, to_json_binary, wasm_execute, Addr, Binary, CosmosMsg, CustomMsg, Deps, DepsMut, Env,
-    IbcMsg, IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError, WasmMsg,
+    ensure, to_json_binary, wasm_execute, Addr, Api, Binary, CosmosMsg, CustomMsg, Deps, DepsMut,
+    Env, IbcMsg, IbcTimeout, MessageInfo, QuerierWrapper, Reply, Response, StdError, WasmMsg,
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw_storage_plus::Map;
@@ -80,7 +80,7 @@ pub fn execute(
                 .add_attribute("action", "transfer_astro"))
         }
         ExecuteMsg::UpdateConfig(params) => update_config(deps, info, env, params),
-        ExecuteMsg::CheckMessages(proposal_messages) => check_messages(env, proposal_messages),
+        ExecuteMsg::CheckMessages(messages) => check_messages(deps.api, env, messages),
         ExecuteMsg::ExecuteFromMultisig(proposal_messages) => {
             exec_from_multisig(deps.querier, info, env, proposal_messages)
         }
@@ -120,7 +120,9 @@ pub fn execute(
     }
 }
 
+/// Checks that proposal messages are correct.
 pub fn check_messages<M>(
+    api: &dyn Api,
     env: Env,
     mut messages: Vec<CosmosMsg<M>>,
 ) -> Result<Response<M>, ContractError>
@@ -128,21 +130,27 @@ where
     M: CustomMsg,
 {
     messages.iter().try_for_each(|msg| match msg {
-        CosmosMsg::Wasm(WasmMsg::Migrate { contract_addr, .. })
-            if contract_addr == env.contract.address.as_str() =>
-        {
+        CosmosMsg::Wasm(
+            WasmMsg::Migrate { contract_addr, .. } | WasmMsg::UpdateAdmin { contract_addr, .. },
+        ) if api.addr_validate(contract_addr)? == env.contract.address => {
             Err(StdError::generic_err(
-                "Can't check messages with a migration message of the contract itself",
+                "Can't check messages with a migration or update admin message of the contract itself",
             ))
         }
+        CosmosMsg::Stargate { type_url, .. } if type_url.contains("MsgGrant") => Err(
+            StdError::generic_err("Can't check messages with a MsgGrant message"),
+        ),
         _ => Ok(()),
     })?;
 
-    messages.push(CosmosMsg::Wasm(wasm_execute(
-        env.contract.address,
-        &ExecuteMsg::<M>::CheckMessagesPassed {},
-        vec![],
-    )?));
+    messages.push(
+        wasm_execute(
+            env.contract.address,
+            &ExecuteMsg::<M>::CheckMessagesPassed {},
+            vec![],
+        )?
+        .into(),
+    );
 
     Ok(Response::new()
         .add_attribute("action", "check_messages")

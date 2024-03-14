@@ -7,8 +7,8 @@ use astro_satellite::state::Config;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
 use astroport_mocks::{astroport_address, MockSatelliteBuilder};
 use cosmwasm_std::{
-    from_json, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdResult, WasmMsg,
+    from_json, wasm_execute, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
+    Response, StdResult, WasmMsg,
 };
 
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
@@ -149,8 +149,8 @@ fn test_check_messages() {
         )
         .unwrap_err();
     assert_eq!(
-        err.downcast::<ContractError>().unwrap(),
-        ContractError::MessagesCheckPassed {}
+        err.root_cause().to_string(),
+        "Generic error: Can't check messages with a migration or update admin message of the contract itself"
     );
 
     // Try to clear contract admin
@@ -186,7 +186,24 @@ fn test_check_messages() {
         .unwrap_err();
     assert_eq!(
         err.root_cause().to_string(),
-        "Generic error: Can't check messages with a migration message of the contract itself"
+        "Generic error: Can't check messages with a migration or update admin message of the contract itself"
+    );
+
+    // Check authz MsgGrant message
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![CosmosMsg::Stargate {
+                type_url: "/cosmos.authz.v1beta1.MsgGrant".to_string(),
+                value: Default::default(),
+            }]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Generic error: Can't check messages with a MsgGrant message"
     );
 }
 
