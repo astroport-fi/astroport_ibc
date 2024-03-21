@@ -172,7 +172,7 @@ where
     {
         None => Err(ContractError::Unauthorized {}),
         // Don't allow to execute this endpoint if the contract is admin of itself
-        Some(admin) if (admin != info.sender || admin == env.contract.address) => {
+        Some(admin) if admin != info.sender || admin == env.contract.address => {
             Err(ContractError::Unauthorized {})
         }
         _ => Ok(()),
