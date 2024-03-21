@@ -205,6 +205,26 @@ fn test_check_messages() {
         err.root_cause().to_string(),
         "Generic error: Can't check messages with a MsgGrant message"
     );
+
+    // Check execute from multisig message
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![wasm_execute(
+                &satellite_addr,
+                &ExecuteMsg::<Empty>::ExecuteFromMultisig(vec![]),
+                vec![],
+            )
+            .unwrap()
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.downcast::<ContractError>().unwrap(),
+        ContractError::Unauthorized {}
+    );
 }
 
 #[test]

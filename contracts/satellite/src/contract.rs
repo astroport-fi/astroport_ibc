@@ -167,11 +167,14 @@ where
     M: CustomMsg,
 {
     match querier
-        .query_wasm_contract_info(env.contract.address)?
+        .query_wasm_contract_info(&env.contract.address)?
         .admin
     {
         None => Err(ContractError::Unauthorized {}),
-        Some(admin) if admin != info.sender => Err(ContractError::Unauthorized {}),
+        // Don't allow to execute this endpoint if the contract is admin of itself
+        Some(admin) if (admin != info.sender || admin == env.contract.address) => {
+            Err(ContractError::Unauthorized {})
+        }
         _ => Ok(()),
     }?;
 
