@@ -5,6 +5,18 @@ members = [
     "packages/*"
 ]
 
+[workspace.dependencies]
+astroport-governance = { git = "https://github.com/astroport-fi/astroport-governance", version = "1" }
+astroport-ibc = { path = "packages/astroport-ibc", version = "1" }
+cosmwasm-std = "1.5"
+cosmwasm-storage = "1.5"
+cw-storage-plus = "0.15"
+cosmwasm-schema = "1.5"
+cw2 = "1"
+thiserror = "1.0"
+cw-utils = "1"
+itertools = "0.12"
+
 [profile.release]
 opt-level = 'z'
 debug = false

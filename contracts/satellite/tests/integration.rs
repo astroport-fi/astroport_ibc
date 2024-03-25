@@ -7,8 +7,8 @@ use astro_satellite::state::Config;
 use astro_satellite_package::{ExecuteMsg, InstantiateMsg, UpdateConfigMsg};
 use astroport_mocks::{astroport_address, MockSatelliteBuilder};
 use cosmwasm_std::{
-    from_slice, wasm_execute, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdResult, WasmMsg,
+    from_json, wasm_execute, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
+    Response, StdResult, WasmMsg,
 };
 
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
@@ -99,9 +99,19 @@ fn test_check_messages() {
             },
             &[],
             "Satellite label",
-            None,
+            Some(owner.to_string()),
         )
         .unwrap();
+
+    app.execute(
+        owner.clone(),
+        WasmMsg::UpdateAdmin {
+            contract_addr: satellite_addr.to_string(),
+            admin: satellite_addr.to_string(),
+        }
+        .into(),
+    )
+    .unwrap();
 
     let noop_code = app.store_code(noop_contract());
     let noop_addr = app
@@ -109,7 +119,6 @@ fn test_check_messages() {
         .unwrap();
 
     let messages: Vec<_> = (0..5)
-        .into_iter()
         .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
@@ -124,6 +133,97 @@ fn test_check_messages() {
     assert_eq!(
         ContractError::MessagesCheckPassed {},
         err.downcast().unwrap()
+    );
+
+    // Try to update contract admin
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::UpdateAdmin {
+                contract_addr: satellite_addr.to_string(),
+                admin: "hacker".to_string(),
+            }
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Generic error: Can't check messages with a migration or update admin message of the contract itself"
+    );
+
+    // Try to clear contract admin
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::ClearAdmin {
+                contract_addr: satellite_addr.to_string(),
+            }
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.downcast::<ContractError>().unwrap(),
+        ContractError::MessagesCheckPassed {}
+    );
+
+    // Can't check satellite migration message
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::Migrate {
+                contract_addr: satellite_addr.to_string(),
+                new_code_id: 100,
+                msg: Default::default(),
+            }
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Generic error: Can't check messages with a migration or update admin message of the contract itself"
+    );
+
+    // Check authz MsgGrant message
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![CosmosMsg::Stargate {
+                type_url: "/cosmos.authz.v1beta1.MsgGrant".to_string(),
+                value: Default::default(),
+            }]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Generic error: Can't check messages with a MsgGrant message"
+    );
+
+    // Check execute from multisig message
+    let err = app
+        .execute_contract(
+            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![wasm_execute(
+                &satellite_addr,
+                &ExecuteMsg::<Empty>::ExecuteFromMultisig(vec![]),
+                vec![],
+            )
+            .unwrap()
+            .into()]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.downcast::<ContractError>().unwrap(),
+        ContractError::Unauthorized {}
     );
 }
 
@@ -160,7 +260,6 @@ fn test_execute_multisig() {
         .unwrap();
 
     let messages: Vec<_> = (0..5)
-        .into_iter()
         .map(|_| wasm_execute(&noop_addr, &Empty {}, vec![]).unwrap().into())
         .collect();
 
@@ -233,7 +332,7 @@ fn test_check_update_configs() {
         .query_wasm_raw(satellite_addr.clone(), b"config".as_slice())
         .unwrap()
     {
-        let res: Config = from_slice(&res).unwrap();
+        let res: Config = from_json(res).unwrap();
         assert_eq!("wasm.controller_addr_test", res.main_controller_port);
     }
 

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, from_binary, wasm_execute, Addr, DepsMut, Env, Ibc3ChannelOpenResponse,
+    entry_point, from_json, wasm_execute, Addr, DepsMut, Env, Ibc3ChannelOpenResponse,
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
     IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, StdError, StdResult, SubMsg,
@@ -100,7 +100,7 @@ pub fn ibc_packet_timeout(
 ) -> StdResult<IbcBasicResponse> {
     let mut res = IbcBasicResponse::new();
 
-    let satellite_msg: SatelliteMsg = from_binary(&msg.packet.data)?;
+    let satellite_msg: SatelliteMsg = from_json(&msg.packet.data)?;
     match satellite_msg {
         SatelliteMsg::ExecuteProposal { id, .. } => {
             // The original packet was a proposal
@@ -146,8 +146,8 @@ pub fn ibc_packet_ack(
 ) -> StdResult<IbcBasicResponse> {
     let mut res = IbcBasicResponse::new();
 
-    let ibc_ack: IbcAckResult = from_binary(&msg.acknowledgement.data)?;
-    let satellite_msg: SatelliteMsg = from_binary(&msg.original_packet.data)?;
+    let ibc_ack: IbcAckResult = from_json(&msg.acknowledgement.data)?;
+    let satellite_msg: SatelliteMsg = from_json(&msg.original_packet.data)?;
     match satellite_msg {
         SatelliteMsg::ExecuteProposal { id, .. } => {
             // The original packet was a proposal
@@ -207,7 +207,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_ibc_channel_close_init, mock_ibc_packet_ack, mock_ibc_packet_timeout,
     };
-    use cosmwasm_std::{attr, to_binary, Binary, CosmosMsg, IbcAcknowledgement, WasmMsg};
+    use cosmwasm_std::{attr, to_json_binary, Binary, CosmosMsg, IbcAcknowledgement, WasmMsg};
 
     use ibc_controller_package::ExecuteMsg;
 
@@ -262,7 +262,7 @@ mod tests {
         assert_eq!(state, ProposalStatus::Executed);
 
         assert_eq!(resp.messages.len(), 1);
-        let valid_msg = to_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
+        let valid_msg = to_json_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
             proposal_id,
             status: ProposalStatus::Executed,
         })
@@ -300,7 +300,7 @@ mod tests {
         assert_eq!(state, ProposalStatus::Failed);
 
         assert_eq!(resp.messages.len(), 1);
-        let valid_msg = to_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
+        let valid_msg = to_json_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
             proposal_id,
             status: ProposalStatus::Failed,
         })
@@ -392,7 +392,7 @@ mod tests {
         assert_eq!(state, ProposalStatus::Failed);
 
         assert_eq!(resp.messages.len(), 1);
-        let valid_msg = to_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
+        let valid_msg = to_json_binary(&AssemblyExecuteMsg::IBCProposalCompleted {
             proposal_id,
             status: ProposalStatus::Failed,
         })

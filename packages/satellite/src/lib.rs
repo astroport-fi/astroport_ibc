@@ -76,12 +76,11 @@ pub enum QueryMsg {
     ProposalState { id: u64 },
 }
 
+// MigrateMsg for 1.1.0-hubmove -> 1.2.0.
+// init_msg must be set on Terra to perform assembly -> satellite conversion.
 #[cw_serde]
 pub struct MigrateMsg {
-    /// Time in seconds after which the satellite considers itself lost
-    pub max_signal_outage: u64,
-    /// An address that can migrate the contract and change its config if the satellite is lost
-    pub emergency_owner: String,
+    pub init_msg: Option<InstantiateMsg>,
 }
 
 /// This is a generic ICS acknowledgement format.
