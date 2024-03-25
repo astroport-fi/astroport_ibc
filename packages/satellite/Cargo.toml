@@ -1,6 +1,6 @@
 [package]
 name = "astro-satellite-package"
-version = "1.0.0"
+version = "1.2.0"
 authors = ["Astroport"]
 license = "GPL-3.0-only"
 description = "Astroport satellite contract's types"
