@@ -1,7 +1,7 @@
-use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
 use cosmwasm_std::StdError;
-use cw_utils::PaymentError;
 use thiserror::Error;
+
+use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
 
 /// Never is a placeholder to ensure we don't return any errors
 #[derive(Error, Debug)]
@@ -33,9 +33,6 @@ pub enum ContractError {
     #[error("Invalid source port {invalid}. Should be : {valid}")]
     InvalidSourcePort { invalid: String, valid: String },
 
-    #[error("{0}")]
-    PaymentError(#[from] PaymentError),
-
     #[error("Messages check passed. Nothing was committed to the blockchain")]
     MessagesCheckPassed {},
 
@@ -54,4 +51,7 @@ pub enum ContractError {
         SIGNAL_OUTAGE_LIMITS.end()
     )]
     SignalOutageLimitsError {},
+
+    #[error("Satellite doesn't have any ASTRO in balance")]
+    NoAstroBalance {},
 }
