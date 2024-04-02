@@ -1,6 +1,6 @@
 [package]
 name = "astro-satellite-package"
-version = "1.0.0"
+version = "1.2.0"
 authors = ["Astroport"]
 license = "GPL-3.0-only"
 description = "Astroport satellite contract's types"
@@ -9,6 +9,6 @@ homepage = "https://astroport.fi"
 edition = "2021"
 
 [dependencies]
-astroport-governance = { git = "https://github.com/astroport-fi/astroport-governance", version = "1" }
-cosmwasm-std = "1.1"
-cosmwasm-schema = "1.1"
+astroport-governance = { workspace = true }
+cosmwasm-std = { workspace = true }
+cosmwasm-schema = { workspace = true }

@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse,
+    entry_point, from_json, to_json_binary, Binary, DepsMut, Env, Ibc3ChannelOpenResponse,
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
     IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, ReplyOn, StdError, StdResult, SubMsg,
@@ -19,12 +19,12 @@ pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
 
 /// Create a serialized success message
 pub fn ack_ok() -> Binary {
-    to_binary(&IbcAckResult::Ok(b"ok".into())).unwrap()
+    to_json_binary(&IbcAckResult::Ok(b"ok".into())).unwrap()
 }
 
 /// Create a serialized error message
 pub fn ack_fail(err: impl Display) -> Binary {
-    to_binary(&IbcAckResult::Error(err.to_string())).unwrap()
+    to_json_binary(&IbcAckResult::Error(err.to_string())).unwrap()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -127,9 +127,9 @@ fn do_packet_receive(
     }
 
     // TODO: Remove or_else and map_err method calls once the controller is upgraded to v1.0.0
-    let satellite_msg = from_binary(&msg.packet.data)
+    let satellite_msg = from_json(&msg.packet.data)
         .or_else(|_| {
-            let IbcProposal { id, messages } = from_binary(&msg.packet.data)?;
+            let IbcProposal { id, messages } = from_json(&msg.packet.data)?;
             Ok(SatelliteMsg::ExecuteProposal { id, messages })
         })
         .map_err(ContractError::Std)?;
@@ -336,7 +336,7 @@ mod tests {
         let msg = mock_ibc_packet_recv("random_channel", &()).unwrap();
         // However, we will never receive error here, but encoded error message in .acknowledgement field
         let resp = ibc_packet_receive(deps.as_mut(), env.clone(), msg).unwrap();
-        let ack: IbcAckResult = from_binary(&resp.acknowledgement).unwrap();
+        let ack: IbcAckResult = from_json(resp.acknowledgement).unwrap();
         assert_eq!(
             ack,
             IbcAckResult::Error("Governance is not established yet".to_string())
@@ -364,7 +364,7 @@ mod tests {
         // Trying to send messages via wrong channel
         let msg = mock_ibc_packet_recv("channel-5", &()).unwrap();
         let resp = ibc_packet_receive(deps.as_mut(), env.clone(), msg).unwrap();
-        let ack: IbcAckResult = from_binary(&resp.acknowledgement).unwrap();
+        let ack: IbcAckResult = from_json(resp.acknowledgement).unwrap();
         assert_eq!(
             ack,
             IbcAckResult::Error(format!(
@@ -385,7 +385,7 @@ mod tests {
         let msg = mock_ibc_packet_recv(GOV_CHANNEL, &ibc_proposal).unwrap();
         let resp = ibc_packet_receive(deps.as_mut(), env.clone(), msg).unwrap();
         assert_eq!(resp.messages.last().unwrap().reply_on, ReplyOn::Success);
-        let ack: IbcAckResult = from_binary(&resp.acknowledgement).unwrap();
+        let ack: IbcAckResult = from_json(&resp.acknowledgement).unwrap();
         assert_eq!(ack, IbcAckResult::Ok(b"ok".into()));
     }
 }

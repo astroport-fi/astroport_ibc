@@ -2,7 +2,7 @@ use astroport_ibc::TIMEOUT_LIMITS;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
+    attr, to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
     Response, StdError, SubMsg,
 };
 use cw2::{get_contract_version, set_contract_version};
@@ -68,7 +68,7 @@ pub fn execute(
 
             let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id: channel_id.clone(),
-                data: to_binary(&SatelliteMsg::ExecuteProposal {
+                data: to_json_binary(&SatelliteMsg::ExecuteProposal {
                     id: proposal_id,
                     messages,
                 })?,
@@ -129,7 +129,7 @@ pub fn execute(
             for channel in channels {
                 let ibc_msg = CosmosMsg::Ibc(IbcMsg::SendPacket {
                     channel_id: channel.clone(),
-                    data: to_binary(&SatelliteMsg::Heartbeat {})?,
+                    data: to_json_binary(&SatelliteMsg::Heartbeat {})?,
                     timeout: IbcTimeout::from(env.block.time.plus_seconds(config.timeout)),
                 });
                 res.messages.push(SubMsg::new(ibc_msg));
@@ -146,9 +146,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
     match msg {
         QueryMsg::ProposalState { id } => {
             let state = PROPOSAL_STATE.load(deps.storage, id)?;
-            Ok(to_binary(&state)?)
+            Ok(to_json_binary(&state)?)
         }
-        QueryMsg::LastError {} => Ok(to_binary(&LAST_ERROR.load(deps.storage)?)?),
+        QueryMsg::LastError {} => Ok(to_json_binary(&LAST_ERROR.load(deps.storage)?)?),
     }
 }
 
@@ -175,7 +175,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{from_binary, BankMsg, Coin, Uint128};
+    use cosmwasm_std::{from_json, BankMsg, Coin, Uint128};
 
     use super::*;
     use crate::test_utils::{init_contract, mock_all, OWNER};
@@ -210,7 +210,7 @@ mod tests {
                 timeout,
                 data,
             }) if channel_id == channel_id && timeout == &real_timeout => {
-                let msg: SatelliteMsg = from_binary(data).unwrap();
+                let msg: SatelliteMsg = from_json(data).unwrap();
                 assert_eq!(
                     msg,
                     SatelliteMsg::ExecuteProposal {
