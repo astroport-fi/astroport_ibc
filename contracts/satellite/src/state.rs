@@ -5,8 +5,8 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Item, Map};
 
-use astroport::common::OwnershipProposal;
 use astro_satellite_package::{InstantiateMsg, UpdateConfigMsg};
+use astroport::common::OwnershipProposal;
 use astroport_ibc::{SIGNAL_OUTAGE_LIMITS, TIMEOUT_LIMITS};
 
 use crate::error::ContractError;
