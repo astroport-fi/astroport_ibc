@@ -2,17 +2,15 @@ use astroport_ibc::TIMEOUT_LIMITS;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Response, StdError, SubMsg,
+    attr, to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcMsg, IbcTimeout,
+    MessageInfo, Response, StdError, SubMsg,
 };
 use cw2::{get_contract_version, set_contract_version};
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
 
 use astro_satellite_package::SatelliteMsg;
-use ibc_controller_package::astroport_governance::astroport::common::{
-    claim_ownership, drop_ownership_proposal, propose_new_owner,
-};
-use ibc_controller_package::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use astroport::common::{claim_ownership, drop_ownership_proposal, propose_new_owner};
+use ibc_controller_package::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG, LAST_ERROR, OWNERSHIP_PROPOSAL, PROPOSAL_STATE};
@@ -153,12 +151,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
         "ibc-controller" => match contract_version.version.as_ref() {
-            "0.3.0" => {}
+            "1.1.1" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),

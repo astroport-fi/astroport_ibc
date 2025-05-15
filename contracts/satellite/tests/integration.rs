@@ -124,7 +124,7 @@ fn test_check_messages() {
 
     let err = app
         .execute_contract(
-            owner.clone(),
+            satellite_addr.clone(),
             satellite_addr.clone(),
             &ExecuteMsg::<Empty>::CheckMessages(messages),
             &[],
@@ -138,7 +138,7 @@ fn test_check_messages() {
     // Try to update contract admin
     let err = app
         .execute_contract(
-            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
             satellite_addr.clone(),
             &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::UpdateAdmin {
                 contract_addr: satellite_addr.to_string(),
@@ -156,7 +156,7 @@ fn test_check_messages() {
     // Try to clear contract admin
     let err = app
         .execute_contract(
-            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
             satellite_addr.clone(),
             &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::ClearAdmin {
                 contract_addr: satellite_addr.to_string(),
@@ -173,7 +173,7 @@ fn test_check_messages() {
     // Can't check satellite migration message
     let err = app
         .execute_contract(
-            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
             satellite_addr.clone(),
             &ExecuteMsg::<Empty>::CheckMessages(vec![WasmMsg::Migrate {
                 contract_addr: satellite_addr.to_string(),
@@ -192,7 +192,7 @@ fn test_check_messages() {
     // Check authz MsgGrant message
     let err = app
         .execute_contract(
-            Addr::unchecked("permissionless"),
+            satellite_addr.clone(),
             satellite_addr.clone(),
             &ExecuteMsg::<Empty>::CheckMessages(vec![CosmosMsg::Stargate {
                 type_url: "/cosmos.authz.v1beta1.MsgGrant".to_string(),
@@ -204,6 +204,20 @@ fn test_check_messages() {
     assert_eq!(
         err.root_cause().to_string(),
         "Generic error: Can't check messages with a MsgGrant message"
+    );
+
+    // Nobody but a satellite contract can be a message sender
+    let err = app
+        .execute_contract(
+            Addr::unchecked("random"),
+            satellite_addr.clone(),
+            &ExecuteMsg::<Empty>::CheckMessages(vec![]),
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.downcast::<ContractError>().unwrap(),
+        ContractError::Unauthorized {}
     );
 
     // Check execute from multisig message
