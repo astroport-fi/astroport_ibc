@@ -1,6 +1,6 @@
 [package]
 name = "ibc-controller"
-version = "1.1.1"
+version = "1.1.2"
 authors = ["Astroport"]
 license = "GPL-3.0-only"
 description = "Astroport IBC controller serves as a bridge for governance messages between Assembly and outposts."
@@ -19,7 +19,7 @@ library = []
 
 [dependencies]
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
-cosmwasm-storage = { workspace = true }
+astroport = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw2 = { workspace = true }
 thiserror = { workspace = true }

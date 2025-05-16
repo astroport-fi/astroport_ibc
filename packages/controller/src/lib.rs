@@ -45,11 +45,6 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {
-    pub new_timeout: Option<u64>,
-}
-
-#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     #[returns(ProposalStatus)]

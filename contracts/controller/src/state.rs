@@ -2,8 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
+use astroport::common::OwnershipProposal;
 use ibc_controller_package::astroport_governance::assembly::ProposalStatus;
-use ibc_controller_package::astroport_governance::astroport::common::OwnershipProposal;
 
 #[cw_serde]
 pub struct Config {
