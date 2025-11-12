@@ -21,7 +21,7 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "astro-satellite"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "astro-satellite-package",
  "astroport",
@@ -37,9 +37,8 @@ dependencies = [
 
 [[package]]
 name = "astro-satellite-package"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
- "astroport-governance",
  "cosmwasm-schema",
  "cosmwasm-std",
 ]
