@@ -1,4 +1,3 @@
-use astroport_governance::assembly::ProposalStatus;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Binary, CosmosMsg, CustomMsg, Empty};
 
@@ -69,6 +68,19 @@ pub enum SatelliteMsg {
     Heartbeat {},
 }
 
+/// Status of a governance proposal.
+/// Imported from the astroport-governance crate to avoid dependency issues.
+#[cw_serde]
+pub enum ProposalStatus {
+    Active,
+    Passed,
+    Rejected,
+    InProgress,
+    Failed,
+    Executed,
+    Expired,
+}
+
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
@@ -84,5 +96,3 @@ pub enum IbcAckResult {
     Ok(Binary),
     Error(String),
 }
-
-pub use astroport_governance;

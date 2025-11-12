@@ -1,6 +1,6 @@
 [package]
 name = "astro-satellite"
-version = "1.2.1"
+version = "1.2.2"
 authors = ["Astroport"]
 license = "GPL-3.0-only"
 description = "IBC enabled astroport satellite contract intended to be hosted on a remote chain."
@@ -23,8 +23,8 @@ astroport = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw2 = { workspace = true }
 thiserror = { workspace = true }
-ibc-controller-package = { path = "../../packages/controller", version = "1.0.0" }
-astro-satellite-package = { path = "../../packages/satellite", version = "1.0.0" }
+ibc-controller-package = { path = "../../packages/controller", version = "1.1" }
+astro-satellite-package = { path = "../../packages/satellite", version = "1.2" }
 astroport-ibc = { workspace = true }
 cosmwasm-schema = { workspace = true }
 
